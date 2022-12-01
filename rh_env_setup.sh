@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Openshift Tools and Environment Setup for Red Hat Consulting 
-# Author: jumedina@redhat.com 
-# 
+#
+# OpenShift Tools and Environment Setup for Red Hat Consulting
+# Author: jumedina@redhat.com
+#
 
 # -------------------------
 # Setting up working directory
@@ -11,7 +12,7 @@ bin_dir="${HOME}/bin/"
 mkdir -p ${bin_dir}
 
 # -------------------------
-# Setting up .vimrc 
+# Setting up .vimrc
 # -------------------------
 cat << EOF > ~/.vimrc
 set nocompatible
@@ -49,43 +50,43 @@ set sidescrolloff=15
 set sidescroll=1
 filetype on
 filetype plugin on
-filetype indent on 
+filetype indent on
 syntax on
-colorscheme murphy 
+colorscheme murphy
 
-EOF 
+EOF
 
 # -------------------------
 # Setup tools
 # -------------------------
-sudo dnf install -y git bash-completion jq vim podman tree 
+sudo dnf install -y git bash-completion jq vim podman tree
 
 cp ~/.bashrc ~/.bashrc_beforeRH
 
-cat << EOF > ~/.bashrc 
+cat << EOF > ~/.bashrc
 # Bash Completion Configuration
 if [[ -f /usr/share/bash-completion/bash_completion ]]
 then
   . /usr/share/bash-completion/bash_completion
 fi
 
-EOF 
+EOF
 
 # -------------------------
 # Setup Kustomize
 # -------------------------
 
-cd ${bin_dir} 
-curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash 
+cd ${bin_dir}
+curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
 
 # -------------------------
-# Setup OC CLI 
+# Setup OC CLI
 # -------------------------
-wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz  
+wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
 tar -xvzf openshift-client-linux.tar.gz
 rm -rf openshift-client-linux.tar.gz
 
-cat << EOF > ~/.bashrc 
+cat << EOF > ~/.bashrc
 
 # OC Completion Configuration
 if [ command -v oc &>/dev/null ]
@@ -102,13 +103,13 @@ fi
 alias k=kubectl
 complete -o default -F __start_kubectl k
 
-EOF 
+EOF
 
 source ~/.bashrc
 
-oc version 
-kubectl version 
-kustomize version 
+oc version
+kubectl version
+kustomize version
 
 
 # --------------------------------------------------
@@ -118,18 +119,18 @@ kustomize version
 # -------------------------
 # Enable X11 Forwarding over SSH
 # -------------------------
-# grep X11Forwarding /etc/ssh/sshd_config &>/dev/null 
-# sudo dnf install -y xauth 
+# grep X11Forwarding /etc/ssh/sshd_config &>/dev/null
+# sudo dnf install -y xauth
 # cp /etc/sshd/sshd_config /etc/sshd/sshd_config_beforex11
 # sed -i 's/X11Forwarding no/X11Forwarding no/g' /etc/sshd/sshd_config
 # grep X11Forwarding /etc/ssh/sshd_config
-# sudo systemctl restart sshd.service 
+# sudo systemctl restart sshd.service
 
 # -------------------------
-# Install and setup asciidocs
+# Install and setup asciidoc
 # -------------------------
 # sudo dnf install -y asciidoctor ruby
-# gem install asciidoctor-pdf --pre 
-# gem install asciidoctor-diagram --pre 
+# gem install asciidoctor-pdf --pre
+# gem install asciidoctor-diagram --pre
 
-echo "Execute 'source ~/.bashrc' to load environment changes in current session" 
+echo "Execute 'source ~/.bashrc' to load environment changes in current session"

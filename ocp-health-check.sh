@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
-# Openshift 4 Health Check Report Generator 
-# Author: jumedina@redhat.com 
+#
+# OpenShift 4 Health Check Report Generator
+# Author: jumedina@redhat.com
 # -------------------------
 # Install and setup asciidocs
 # -------------------------
 # sudo dnf install -y asciidoctor ruby
-# gem install asciidoctor-pdf  
-# gem install asciidoctor-diagram  
+# gem install asciidoctor-pdf
+# gem install asciidoctor-diagram
 
-# Global Variables 
+# Global Variables
 
-customer=''; adoc=''; namespaces=''; cv=''; 
+customer=''; adoc=''; namespaces=''; cv='';
 # Section totals for executive resume (total, count)
 tot_commons=(0 0 0);    tot_nodes=(0 0 0);         tot_machines=(0 0 0)
 tot_etcd=(0 0 0);       tot_pods=(0 0 0);          tot_security=(0 0 0)
@@ -18,48 +19,49 @@ tot_storage=(0 0 0);    tot_performance=(0 0 0);   tot_logging=(0 0 0)
 tot_monitoring=(0 0 0); tot_network=(0 0 0);       tot_operators=(0 0 0)
 tot_mesh=(0 0 0);       tot_applications=(0 0 0)
 
-# Functions 
+# Functions
 
 environment_setup(){
    if [ -z ${1} ]
-   then 
+   then
       echo "A short customer name is required (no spaces). ${1}"
-      exit 
-   fi 
+      exit
+   fi
    customer=${1}
    echo "Running Health Check for ${customer}"
 
-   # Verify oc command 
+   # Verify oc command
 
-   if [ ! command -v oc &> /dev/null ] 
-   then 
+   if [ ! command -v oc &> /dev/null ]
+   then
       echo "Command oc not found!"
-      exit 
-   else 
+      exit
+   else
       echo "   - oc command: OK"
-   fi 
-   # Verify jq command 
+   fi
+   # Verify jq command
 
    if [ ! command -v jq &> /dev/null ]
-   then 
+   then
       echo "Command jq not found!"
-      exit 
-   else 
+      exit
+   else
       echo "   - jq command: OK"
    fi
 
    namespaces=$(oc get namespaces --no-headers | awk '{print $1}')
    cv=$(oc version | grep Server | awk '{print $3}' | sed -e 's/.[0-9][0-9]$//g')
-   
-   # Making sure the schrodingers-cat project doesn't exist 
-   oc delete project schrodingers-cat &>/dev/null 
+
+   # Making sure the schrodingers-cat project doesn't exist
+   oc delete project schrodingers-cat &>/dev/null
 
    # Setting up report.adoc
    adoc="pdf/report.adoc"
-   rm ${adoc}
-   rm pdf/table.adoc
-   rm pdf/resume.adoc
+   rm -f ${adoc}
+   rm -f pdf/table.adoc
+   rm -f pdf/resume.adoc
    echo ":author: Red Hat Consulting" >> ${adoc}
+   echo ":customer: ${customer}" >> ${adoc}
    echo ":toc:" >> ${adoc}
    echo ":numbered:" >> ${adoc}
    echo ":doctype: book" >> ${adoc}
@@ -71,32 +73,32 @@ environment_setup(){
    echo ":pdf-stylesdir: styles/" >> ${adoc}
    echo ":pdf-fontsdir: fonts/" >> ${adoc}
    echo "" >> ${adoc}
-   echo "= Openshift 4 Health Check Report" >> ${adoc}
+   echo "= OpenShift 4 Health Check Report" >> ${adoc}
    echo "" >> ${adoc}
 }
 
 generate_pdf(){
-   if [ ! command -v asciidoctor-pdf &> /dev/null ] 
-   then 
+   if [ ! command -v asciidoctor-pdf &> /dev/null ]
+   then
       echo "Command asciidoctor-pdf not found!"
       echo "Generation of the PDF skipped..."
-   else 
+   else
       report="${customer}_HealthCheck_Report.pdf"
       if [[ -d pdf ]]
-      then 
+      then
          cd pdf
-         gem list | grep -w ^asciidoctor-diagram\ .*$ &>/dev/null 
+         gem list | grep -w ^asciidoctor-diagram\ .*$ &>/dev/null
          if [ $? == 0 ]
-         then 
-            asciidoctor-pdf -r asciidoctor-diagram -o "../${report}" report.adoc 
-         else 
-            asciidoctor-pdf -o "../${report}" report.adoc 
+         then
+            asciidoctor-pdf -r asciidoctor-diagram -o "../${report}" report.adoc
+         else
+            asciidoctor-pdf -o "../${report}" report.adoc
          fi
       else
          echo "The `pdf` directory couldn't be found!"
          echo "Generation of the PDF skipped..."
       fi
-   fi 
+   fi
 }
 
 title(){
@@ -110,39 +112,39 @@ sub(){
    echo "" >> ${adoc}
 }
 
-codeblock(){ 
-   echo "----" >> ${adoc} 
+codeblock(){
+   echo "----" >> ${adoc}
 }
 
 quote(){
-   echo ".${1}" >> ${adoc} 
-   echo "" >> ${adoc} 
+   echo ".${1}" >> ${adoc}
+   echo "" >> ${adoc}
 }
 
 link(){
-   echo "" >> ${adoc} 
-   echo "${1}[Reference Documentation]" >> ${adoc} 
-   echo "" >> ${adoc} 
+   echo "" >> ${adoc}
+   echo "${1}[Reference Documentation]" >> ${adoc}
+   echo "" >> ${adoc}
 }
 
 executive_summary(){
    if [ -f pdf/addons/executive.adoc ]
-   then 
+   then
       cat pdf/addons/executive.adoc >> ${adoc}
       echo "" >> ${adoc}
       echo "@STATUS_PLACEHOLDER@" >> ${adoc}
       echo "" >> ${adoc}
       echo "@CHECKLIST_PLACEHOLDER@" >> ${adoc}
       echo "" >> ${adoc}
-   else 
+   else
       echo "The pdf/addons/executive.adoc file was not found. Will continue without executive summary"
-   fi 
+   fi
 }
 
 addons(){
    # This space is reserved to include other adoc documents in the report
    # The structure of those documents is completely independent
-   # All is required is to place them inside of the pdf/addons/ folder 
+   # All is required is to place them inside of the pdf/addons/ folder
    # and add it to the following list to be processed.
    include_adoc=(odf)
 
@@ -153,8 +155,8 @@ addons(){
 }
 
 table(){
-   # Executive Summary Include in Table 
-   # Receives 3 parameters 
+   # Executive Summary Include in Table
+   # Receives 3 parameters
    # Area
    # Result [PASS, FAIL, REVIEW]
    # Section
@@ -162,7 +164,7 @@ table(){
    resdoc="pdf/resume.adoc"
    valid="PASS FAIL REVIEW"
    if [ ! -f ${tadoc} ]
-   then 
+   then
       # Initializing the checklist and the executive status tables
       touch  ${resdoc}
       echo "" >> ${resdoc}
@@ -176,9 +178,9 @@ table(){
       echo "|===" >> ${tadoc}
       echo "|Area|Result" >> ${tadoc}
 
-   else 
+   else
       if [[ "close_table_now" == ${1} ]]
-      then 
+      then
          echo "|commons       |${tot_commons[0]}         |${tot_commons[1]}      |${tot_commons[2]}"        >> ${resdoc}
          echo "|nodes         |${tot_nodes[0]}           |${tot_nodes[1]}        |${tot_nodes[2]}"          >> ${resdoc}
          echo "|machines      |${tot_machines[0]}        |${tot_machines[1]}     |${tot_machines[2]}"       >> ${resdoc}
@@ -196,7 +198,7 @@ table(){
          echo "|===" >> ${resdoc}
          echo "" >> ${resdoc}
          sed -ie '/@STATUS_PLACEHOLDER@/ r pdf/resume.adoc' ${adoc}
-         sed -i '/@STATUS_PLACEHOLDER@/d' ${adoc}         
+         sed -i '/@STATUS_PLACEHOLDER@/d' ${adoc}
          echo "" >> ${adoc}
 
          echo "|===" >> ${tadoc}
@@ -207,87 +209,87 @@ table(){
       else
          # Generating table adocs
          if grep -q ${2} <<< ${valid}
-         then 
+         then
             # Direct entry to the checklist
             echo "|${1}|${2}" >> ${tadoc}
-            # Entry to executive summary 
+            # Entry to executive summary
             case ${3} in
-               "commons") 
+               "commons")
                   [[ ${2} == "PASS" ]] && ((tot_commons[0]++))
-                  [[ ${2} == "FAIL" ]] && ((tot_commons[1]++)) 
-                  [[ ${2} == "REVIEW" ]] && ((tot_commons[2]++)) 
+                  [[ ${2} == "FAIL" ]] && ((tot_commons[1]++))
+                  [[ ${2} == "REVIEW" ]] && ((tot_commons[2]++))
                   ;;
-               "nodes") 
+               "nodes")
                   [[ ${2} == "PASS" ]] && ((tot_nodes[0]++))
-                  [[ ${2} == "FAIL" ]] && ((tot_nodes[1]++)) 
-                  [[ ${2} == "REVIEW" ]] && ((tot_nodes[2]++)) 
+                  [[ ${2} == "FAIL" ]] && ((tot_nodes[1]++))
+                  [[ ${2} == "REVIEW" ]] && ((tot_nodes[2]++))
                   ;;
-               "machines") 
+               "machines")
                   [[ ${2} == "PASS" ]] && ((tot_machines[0]++))
-                  [[ ${2} == "FAIL" ]] && ((tot_machines[1]++)) 
+                  [[ ${2} == "FAIL" ]] && ((tot_machines[1]++))
                   [[ ${2} == "REVIEW" ]] && ((tot_machines[2]++))
                   ;;
-               "etcd") 
+               "etcd")
                   [[ ${2} == "PASS" ]] && ((tot_etcd[0]++))
-                  [[ ${2} == "FAIL" ]] && ((tot_etcd[1]++)) 
+                  [[ ${2} == "FAIL" ]] && ((tot_etcd[1]++))
                   [[ ${2} == "REVIEW" ]] && ((tot_etcd[2]++))
                   ;;
-               "pods") 
+               "pods")
                   [[ ${2} == "PASS" ]] && ((tot_pods[0]++))
-                  [[ ${2} == "FAIL" ]] && ((tot_pods[1]++)) 
+                  [[ ${2} == "FAIL" ]] && ((tot_pods[1]++))
                   [[ ${2} == "REVIEW" ]] && ((tot_pods[2]++))
                   ;;
-               "security") 
+               "security")
                   [[ ${2} == "PASS" ]] && ((tot_security[0]++))
-                  [[ ${2} == "FAIL" ]] && ((tot_security[1]++)) 
+                  [[ ${2} == "FAIL" ]] && ((tot_security[1]++))
                   [[ ${2} == "REVIEW" ]] && ((tot_security[2]++))
                   ;;
-               "storage") 
+               "storage")
                   [[ ${2} == "PASS" ]] && ((tot_storage[0]++))
-                  [[ ${2} == "FAIL" ]] && ((tot_storage[1]++)) 
+                  [[ ${2} == "FAIL" ]] && ((tot_storage[1]++))
                   [[ ${2} == "REVIEW" ]] && ((tot_storage[2]++))
                   ;;
-               "performance") 
+               "performance")
                   [[ ${2} == "PASS" ]] && ((tot_performance[0]++))
-                  [[ ${2} == "FAIL" ]] && ((tot_performance[1]++)) 
+                  [[ ${2} == "FAIL" ]] && ((tot_performance[1]++))
                   [[ ${2} == "REVIEW" ]] && ((tot_performance[2]++))
                   ;;
-               "logging") 
+               "logging")
                   [[ ${2} == "PASS" ]] && ((tot_logging[0]++))
-                  [[ ${2} == "FAIL" ]] && ((tot_logging[1]++)) 
+                  [[ ${2} == "FAIL" ]] && ((tot_logging[1]++))
                   [[ ${2} == "REVIEW" ]] && ((tot_logging[2]++))
                   ;;
-               "monitoring") 
+               "monitoring")
                   [[ ${2} == "PASS" ]] && ((tot_monitoring[0]++))
-                  [[ ${2} == "FAIL" ]] && ((tot_monitoring[1]++)) 
+                  [[ ${2} == "FAIL" ]] && ((tot_monitoring[1]++))
                   [[ ${2} == "REVIEW" ]] && ((tot_monitoring[2]++))
                   ;;
-               "network") 
+               "network")
                   [[ ${2} == "PASS" ]] && ((tot_network[0]++))
-                  [[ ${2} == "FAIL" ]] && ((tot_network[1]++)) 
+                  [[ ${2} == "FAIL" ]] && ((tot_network[1]++))
                   [[ ${2} == "REVIEW" ]] && ((tot_network[2]++))
                   ;;
-               "operators") 
+               "operators")
                   [[ ${2} == "PASS" ]] && ((tot_operators[0]++))
-                  [[ ${2} == "FAIL" ]] && ((tot_operators[1]++)) 
+                  [[ ${2} == "FAIL" ]] && ((tot_operators[1]++))
                   [[ ${2} == "REVIEW" ]] && ((tot_operators[2]++))
                   ;;
-               "mesh") 
+               "mesh")
                   [[ ${2} == "PASS" ]] && ((tot_mesh[0]++))
-                  [[ ${2} == "FAIL" ]] && ((tot_mesh[1]++)) 
+                  [[ ${2} == "FAIL" ]] && ((tot_mesh[1]++))
                   [[ ${2} == "REVIEW" ]] && ((tot_mesh[2]++))
                   ;;
-               "applications") 
+               "applications")
                   [[ ${2} == "PASS" ]] && ((tot_applications[0]++))
-                  [[ ${2} == "FAIL" ]] && ((tot_applications[1]++)) 
+                  [[ ${2} == "FAIL" ]] && ((tot_applications[1]++))
                   [[ ${2} == "REVIEW" ]] && ((tot_applications[2]++))
                   ;;
             esac
-         else 
+         else
             echo "Executive Summary table value ${2} for ${1} is not valid. Ignored!."
-         fi 
+         fi
       fi
-   fi 
+   fi
 }
 
 commons(){
@@ -298,9 +300,9 @@ commons(){
       sub "Versions"
       quote "Red Hat OpenShift Container Platform Life Cycle Policy"
       link "https://access.redhat.com/support/policy/updates/openshift"
-      codeblock 
+      codeblock
       oc version >> ${adoc}
-      codeblock 
+      codeblock
       table "Versions" "PASS" ${section}
    }
 
@@ -318,7 +320,7 @@ commons(){
       sub "Cluster Status Conditions"
       quote "ClusterOperatorStatusCondition represents the state of the operator’s managed and monitored components."
       link "https://docs.openshift.com/container-platform/${cv}/installing/validating-an-installation.html#getting-cluster-version-and-update-details_validating-an-installation"
-      codeblock 
+      codeblock
       if [ "True" == $(oc get clusterversion -o=jsonpath='{range .items[0].status.conditions[?(@.type=="Failing")]}{.status}') ]
       then
          oc get clusterversion -o=json | jq '.items[].status.conditions' >> ${adoc}
@@ -327,57 +329,57 @@ commons(){
          echo "All conditions are Normal" >> ${adoc}
          table "Cluster Status Conditions" "PASS" ${section}
       fi
-      codeblock 
+      codeblock
    }
 
    cluster_events_abnormal(){
       sub "Cluster Abnormal Events"
       quote "Events are records of important life-cycle information and are useful for monitoring and troubleshooting resource scheduling, creation, and deletion issues."
       link "https://docs.openshift.com/container-platform/${ns}/virt/logging_events_monitoring/virt-events.html#virt-about-vm-events_virt-events"
-      codeblock 
-      oc get events --field-selector type!=Normal -A --no-headers | awk '{print $1,$3,$4,$5}' | sort | uniq >> ${adoc} 
-      if (( $(oc get events --field-selector type!=Normal -A --no-headers | awk '{print $1,$3,$4,$5}' | sort | uniq | wc -l) > 0 ))
-      then 
+      codeblock
+      oc get events --field-selector type!=Normal -A --no-headers | awk '{print $1,$3,$4,$5}' | sort | uniq >> ${adoc}
+      if (( $(oc get events --field-selector type!=Normal -A --no-headers | awk '{print $1,$3,$4,$5}' | sort | uniq | wc -l) -gt 0 ))
+      then
          table "Cluster Abnormal Events" "REVIEW" ${section}
-      else 
+      else
          table "Cluster Abnoral Events" "PASS" ${section}
       fi
-      codeblock 
+      codeblock
    }
 
    cluster_api_status(){
       sub "Cluster API Server Status"
       api_url=$(oc whoami --show-server)
-      codeblock 
-         curl -k ${api_url} 2>/dev/null | grep 403 >/dev/null 
+      codeblock
+         curl -k ${api_url} 2>/dev/null | grep 403 >/dev/null
          if [ $? != 0 ]
-         then 
+         then
             echo "API Server Status: FAILED" >> ${adoc}
             table "API Server Status" "FAIL"
-         else 
+         else
             echo "API Server Status: SUCCEEDED" >> ${adoc}
             table "API Server Status" "PASS"
-         fi 
-      codeblock 
+         fi
+      codeblock
    }
 
    cluster_console_status(){
       sub "Cluster Console Status"
       console_url=$(oc whoami --show-console)
-      codeblock 
-         curl -k ${console_url} 2>/dev/null | grep "<title>Red Hat OpenShift Container Platform</title>" >/dev/null 
+      codeblock
+         curl -k ${console_url} 2>/dev/null | grep "<title>Red Hat OpenShift Container Platform</title>" >/dev/null
          if [ $? != 0 ]
-         then 
+         then
             echo "Console Status: FAILED" >> ${adoc}
             table "Console Status" "FAIL" ${section}
-         else 
+         else
             echo "Console Status: SUCCEEDED" >> ${adoc}
             table "Console Status" "PASS" ${section}
-         fi 
-      codeblock 
+         fi
+      codeblock
    }
 
-   # Includes 
+   # Includes
    versions
    componentstatuses
    # cluster_status_failing_conditions
@@ -392,16 +394,16 @@ nodes(){
 
    cluster_nodes_status(){
       sub "Cluster Nodes Status"
-      codeblock 
+      codeblock
       oc get nodes --no-headers | awk '$2 != "Ready"' >> ${adoc}
       if [ -z $(oc get nodes --no-headers | awk '$2 != "Ready"') ]
       then
          echo "All node conditions are Ready!"  >> ${adoc}
          table "Cluster Nodes Status" "PASS" ${section}
-      else 
+      else
          table "Cluster Nodes Status" "FAIL" ${section}
-      fi 
-      codeblock 
+      fi
+      codeblock
    }
 
    cluster_nodes_conditions(){
@@ -410,7 +412,7 @@ nodes(){
       for type in ${labels[@]}
       do
          echo "==== ${type} Nodes" >> ${adoc}
-         state="PASS" 
+         state="PASS"
          for node in $(oc get nodes --no-headers | sed 's/,/ /g' | awk '{print $1, $3}' | grep ${type} | awk '{print $1}')
          do
             results=$(oc get node ${node} -o json | \
@@ -419,7 +421,7 @@ nodes(){
                sed 's/type://g; s/status://g; s/reason://g; s/,/ /g' | \
                grep 'Pressure' | grep True)
             if [ -z ${results+x} ]
-            then 
+            then
                echo "**${node}**" >> ${adoc}
                codeblock
                echo ${results} >> ${adoc}
@@ -446,7 +448,7 @@ nodes(){
          do
             oc describe node ${node} | grep "OS Image:" | grep -q CoreOS >/dev/null
             if [ $? -eq 0 ]
-            then 
+            then
                os="CoreOS"
             else
                os="RHEL"
@@ -455,7 +457,7 @@ nodes(){
             echo "|${node}|${type}|${os}|${capacity[0]}|${capacity[1]}|${capacity[2]}" >> ${adoc}
             state="REVIEW"
          done
-      done 
+      done
       table "Cluster Nodes Capacity" ${state} ${section}
       echo "|===" >> ${adoc}
    }
@@ -463,14 +465,14 @@ nodes(){
    customresourcedefinitions(){
       sub "Custom Resource Definitions"
       quote "A custom resource definition (CRD) object defines a new, unique object type, called a kind, in the cluster and lets the Kubernetes API server handle its entire lifecycle."
-      link "https://docs.openshift.com/container-platform/${cv}/operators/understanding/crds/crd-extending-api-with-crds.html" 
+      link "https://docs.openshift.com/container-platform/${cv}/operators/understanding/crds/crd-extending-api-with-crds.html"
       for crd in $(oc get customresourcedefinitions --no-headers 2>/dev/null| awk '{print $1}')
       do
          result=$(oc get customresourcedefinitions \
             volumereplicationclasses.replication.storage.openshift.io -o json 2>/dev/null | \
             jq '.status.conditions[].status')
          if grep -q False <<< ${result}
-         then 
+         then
             echo "**${crd}**" >> ${adoc}
             codeblock
             oc get customresourcedefinitions \
@@ -479,22 +481,22 @@ nodes(){
             codeblock
             table "Custom Resource Definitions" "REVIEW" ${section}
          fi
-      done 
+      done
    }
 
    clusterresourcequotas(){
       sub "Cluster Resource Quotas"
       quote "A multi-project quota, defined by a ClusterResourceQuota object, allows quotas to be shared across multiple projects."
       link "https://docs.openshift.com/container-platform/${cv}/applications/quotas/quotas-setting-across-multiple-projects.html"
-      codeblock 
+      codeblock
       oc get clusterresourcequotas.quota.openshift.io -A --no-headers 2>/dev/null >> ${adoc}
-      if (( $(oc get clusterresourcequotas.quota.openshift.io -A --no-headers 2>/dev/null | wc -l) > 0 ))
-      then 
+      if (( $(oc get clusterresourcequotas.quota.openshift.io -A --no-headers 2>/dev/null | wc -l) -gt 0 ))
+      then
          table "Cluster Resource Quotas" "REVIEW" ${section}
-      else 
+      else
          table "Cluster Resource Quotas" "PASS" ${section}
       fi
-      codeblock 
+      codeblock
    }
 
    clusterserviceversions(){
@@ -503,16 +505,16 @@ nodes(){
       link "https://docs.openshift.com/container-platform/${cv}/applications/quotas/quotas-setting-across-multiple-projects.html"
       codeblock
       oc get clusterserviceversions.operators.coreos.com -A 2>/dev/null | grep -v Succeeded >> ${adoc}
-      if (( $(oc get clusterserviceversions.operators.coreos.com -A --no-headers 2>/dev/null | grep -v Succeeded | wc -l) > 0 ))
-      then 
+      if (( $(oc get clusterserviceversions.operators.coreos.com -A --no-headers 2>/dev/null | grep -v Succeeded | wc -l) -gt 0 ))
+      then
          table "Cluster Service Versions" "FAIL" ${section}
-      else 
+      else
          table "Cluster Service Versions" "PASS" ${section}
       fi
-      codeblock 
+      codeblock
    }
 
-   # Includes 
+   # Includes
    cluster_nodes_status
    cluster_nodes_conditions
    nodes_capacity
@@ -520,7 +522,7 @@ nodes(){
    clusterresourcequotas
    clusterserviceversions
 
-} 
+}
 
 machines(){
    section="machines"
@@ -530,12 +532,12 @@ machines(){
       sub "Machine Information"
       quote "Using machine management you can perform auto-scaling based on specific workload policies."
       link "https://docs.openshift.com/container-platform/${cv}/machine_management/index.html"
-      codeblock 
+      codeblock
       oc get machines -A 2>/dev/null | grep -v Running >> ${adoc}
-      if (( $(oc get machines -A --no-headers 2>/dev/null | grep -v Running | wc -l) > 0 ))
-      then 
+      if (( $(oc get machines -A --no-headers 2>/dev/null | grep -v Running | wc -l) -gt 0 ))
+      then
          table "Machine Information" "FAIL" ${section}
-      else 
+      else
          table "Machine Information" "PASS" ${section}
       fi
       codeblock
@@ -545,63 +547,63 @@ machines(){
       sub "Machinesets Information"
             quote "Using machine management you can perform auto-scaling based on specific workload policies."
       link "https://docs.openshift.com/container-platform/${cv}/machine_management/index.html"
-      codeblock 
+      codeblock
       state="PASS"
-      while read LINE 
-      do 
+      while read LINE
+      do
          machineset=(${LINE})
-         if (( ${machineset[2]} > 0 )) && [[ ${machineset[2]} != ${machineset[5]} ]]
-         then 
+         if (( ${machineset[2]} -gt 0 )) && [[ ${machineset[2]} != ${machineset[5]} ]]
+         then
             echo  ${machineset[@]} >> ${adoc}
             state="FAIL"
          fi
       done < <(oc get machinesets -A 2>/dev/null )
       table "Machinesets Information" ${state} ${section}
-      codeblock 
+      codeblock
    }
 
    machine_configs(){
       sub "Machine Configs"
          quote "Using machine management you can perform auto-scaling based on specific workload policies."
       link "https://docs.openshift.com/container-platform/${cv}/machine_management/index.html"
-      codeblock 
+      codeblock
       oc get nodes machineconfig 2>/dev/null >> ${adoc}
       table "Machine Configs" "PASS" ${section}
-      codeblock 
+      codeblock
    }
 
    machine_configs_pools(){
       sub "Machine Config Pools"
       quote "Using machine management you can perform auto-scaling based on specific workload policies."
       link "https://docs.openshift.com/container-platform/${cv}/machine_management/index.html"
-      codeblock 
+      codeblock
       oc get nodes machineconfigpools 2>/dev/null >> ${adoc}
       table "Machine Config Pools" "PASS" ${section}
-      codeblock 
+      codeblock
    }
 
    machineautoscaler(){
       sub "Machine Auto Scalers"
       quote "Using machine management you can perform auto-scaling based on specific workload policies."
       link "https://docs.openshift.com/container-platform/${cv}/machine_management/index.html"
-      codeblock 
-      oc get machineautoscaler -A 2>/dev/null >> ${adoc}  
+      codeblock
+      oc get machineautoscaler -A 2>/dev/null >> ${adoc}
       table "Machine Auto Scalers" "REVIEW" ${section}
-      codeblock 
+      codeblock
    }
 
    clusterautoscaler(){
       sub "Cluster Auto Scalers"
       quote "Using machine management you can perform auto-scaling based on specific workload policies."
-      link "https://docs.openshift.com/container-platform/${cv}/machine_management/index.html" 
+      link "https://docs.openshift.com/container-platform/${cv}/machine_management/index.html"
       for CA in $(oc get clusterautoscaler --no-headers 2>/dev/null | awk '{print $1}')
-      do 
+      do
          echo "==== ${CA}" >> ${adoc}
          codeblock
-         oc get clusterautoscaler ${CA} -o json 2>/dev/null | jq '.' >> ${adoc} 
+         oc get clusterautoscaler ${CA} -o json 2>/dev/null | jq '.' >> ${adoc}
          codeblock
          echo "" >> ${adoc}
-      done 
+      done
       table "Cluster Auto Scalers" "REVIEW" ${section}
    }
 
@@ -610,22 +612,22 @@ machines(){
       quote "Machine health checks automatically repair unhealthy machines in a particular machine pool."
       link "https://docs.openshift.com/container-platform/${cv}/machine_management/deploying-machine-health-checks.html#machine-health-checks-about_deploying-machine-health-checks"
       state="PASS"
-      codeblock 
+      codeblock
       echo "NAMESPACE NAME MAXUNHEALTHY EXPECTEDMACHINES CURRENTHEALTHY"  >> ${adoc}
-      while read LINE 
-      do 
+      while read LINE
+      do
          machinehealthcheck=(${LINE})
-         if (( ${machinehealthcheck[3]} > 0 )) && [[ ${machinehealthcheck[3]} != ${machinehealthcheck[4]} ]]
-         then 
+         if (( ${machinehealthcheck[3]} -gt 0 )) && [[ ${machinehealthcheck[3]} != ${machinehealthcheck[4]} ]]
+         then
             echo  ${machinehealthcheck[@]} >> ${adoc}
             state="FAIL"
          fi
       done < <(oc get machinehealthcheck -A --no-headers 2>/dev/null)
-      codeblock 
+      codeblock
       table "Machine Health Checks" ${state} ${section}
    }
 
-   # Includes 
+   # Includes
    list_machines
    list_machinesets
    machine_configs
@@ -640,7 +642,7 @@ etcd(){
    section="etcd"
    title ${section}
    ns="openshift-etcd"
-   # Getting 1 pod as target for internal verifications 
+   # Getting 1 pod as target for internal verifications
    t_pod=($(oc get pods -n ${ns} -l app=etcd -o Name | head -1))
    connect="oc exec -n ${ns} ${t_pod} -- "
 
@@ -648,9 +650,9 @@ etcd(){
       sub "etcd pods info"
       quote "For large and dense clusters, etcd can suffer from poor performance if the keyspace grows too large and exceeds the space quota."
       link "https://docs.openshift.com/container-platform/${cv}/scalability_and_performance/recommended-host-practices.html#recommended-etcd-practices_recommended-host-practices"
-      codeblock 
+      codeblock
       oc get pods -n ${ns} -l app=etcd >> ${adoc}
-      codeblock 
+      codeblock
       table "etcd pods info" "REVIEW" ${section}
    }
 
@@ -662,7 +664,7 @@ etcd(){
       echo "|===" >> ${adoc}
       ${connect} etcdctl member list -w table 2>/dev/null | grep -v "+-" | sed 's/..$//' | grep -vE "STATUS|started" >> ${adoc}
       echo "|===" >> ${adoc}
-      if (( $( ${connect} etcdctl member list -w table 2>/dev/null | grep -v "+-" | sed 's/..$//' | grep -vE "STATUS|started" | wc -l ) > 0 ))
+      if (( $( ${connect} etcdctl member list -w table 2>/dev/null | grep -v "+-" | sed 's/..$//' | grep -vE "STATUS|started" | wc -l ) -gt 0 ))
       then
          table "Failing members in the cluster" "FAIL" ${section}
       else
@@ -677,7 +679,7 @@ etcd(){
       echo "[%header, %autowidth"] >> ${adoc}
       echo "|===" >> ${adoc}
       ${connect} etcdctl endpoint status --cluster -w table 2>/dev/null | grep -v "+-" | sed 's/..$//' >> ${adoc}
-      echo "|===" >> ${adoc} 
+      echo "|===" >> ${adoc}
       table "Endpoints status" "REVIEW" ${section}
    }
 
@@ -688,11 +690,11 @@ etcd(){
       echo "[%header, %autowidth"] >> ${adoc}
       echo "|===" >> ${adoc}
       ${connect} etcdctl endpoint health --cluster -w table 2>/dev/null | grep -v "+-" | sed 's/..$//' >> ${adoc}
-      echo "|===" >> ${adoc} 
+      echo "|===" >> ${adoc}
       table "Endpoints Health" "REVIEW" ${section}
    }
 
-   # Includes 
+   # Includes
    list_etcd_pods
    member_list
    endpoint_status
@@ -708,24 +710,24 @@ pods(){
       sub "Failing pods"
       quote "A pod, is one or more containers deployed together on one host. Pods are the rough equivalent of a machine instance to a container."
       link "https://docs.openshift.com/container-platform/${cv}/nodes/pods/nodes-pods-viewing.html"
-      codeblock 
+      codeblock
       oc get pods -A | grep -vE 'Running|Completed' | column -t >> ${adoc}
-      if (( $(oc get pods -A --no-headers | grep -vE 'Running|Completed' | wc -l ) > 0 ))
+      if (( $(oc get pods -A --no-headers | grep -vE 'Running|Completed' | wc -l ) -gt 0 ))
       then
          table "Failing pods" "FAIL" ${section}
       else
          table "Failing pods" "PASS" ${section}
       fi
-      codeblock 
+      codeblock
    }
 
    constantly_restarted_pods(){
       sub "Constanstly restarted pods"
       quote "A pod, is one or more containers deployed together on one host. Pods are the rough equivalent of a machine instance to a container."
       link "https://docs.openshift.com/container-platform/${cv}/nodes/pods/nodes-pods-viewing.html"
-      codeblock 
+      codeblock
       oc get pods -A | grep -w Running | sort -nrk 5 | head -10 | column -t >> ${adoc}
-      codeblock 
+      codeblock
       table "Constanstly restarted pods" "REVIEW" ${section}
    }
 
@@ -733,9 +735,9 @@ pods(){
       sub "Long running pods"
       quote "A pod, is one or more containers deployed together on one host. Pods are the rough equivalent of a machine instance to a container."
       link "https://docs.openshift.com/container-platform/${cv}/nodes/pods/nodes-pods-viewing.html"
-      codeblock 
+      codeblock
       oc get pods -A | grep -w Running | grep -vE "[0-9]h$" | sort -hrk 6| head -10 | column -t >> ${adoc}
-      codeblock 
+      codeblock
       table "Long running pods" "REVIEW" ${section}
    }
 
@@ -743,30 +745,30 @@ pods(){
       sub "Pod Disruption Budget"
       quote "PodDisruptionBudget is an API object that specifies the minimum number or percentage of replicas that must be up at a time."
       link "https://docs.openshift.com/container-platform/${cv}/nodes/pods/nodes-pods-configuring.html#nodes-pods-configuring-pod-distruption-about_nodes-pods-configuring"
-      codeblock 
+      codeblock
       oc get poddisruptionbudget -A | column -t >> ${adoc}
-      codeblock 
+      codeblock
       table "Pod Disruption Budget" "REVIEW" ${section}
    }
 
    pods_in_default(){
       sub "Pods in default namespace"
       quote "Pods in the default namespace are often installed by mistake or misconfigurations."
-      codeblock 
+      codeblock
       oc get pods -n default -o wide 2>/dev/null | column -t >> ${adoc}
-      codeblock 
+      codeblock
       table "Pods in default namespace" "REVIEW" ${section}
    }
 
    pods_per_node(){
       sub "Pods per node"
-      codeblock 
+      codeblock
       oc get pods -A -o wide --no-headers | awk '{print $(NF-2)}' | sort | uniq -c | sort -n >> ${adoc}
-      codeblock 
+      codeblock
       table "Pods per node" "REVIEW" ${section}
    }
 
-   # Includes 
+   # Includes
    list_failing_pods
    constantly_restarted_pods
    long_running_pods
@@ -784,10 +786,10 @@ security(){
       sub "Pending CSRs"
       quote "When you add machines to a cluster, certificate signing requests (CSRs) are generated that you must confirm and approve."
       link "https://docs.openshift.com/container-platform/${cv}/machine_management/user_infra/adding-aws-compute-user-infra.html#installation-approve-csrs_adding-aws-compute-user-infra"
-      codeblock 
+      codeblock
       oc get csr 2>/dev/null | grep -i pending >> ${adoc}
-      codeblock 
-      if (( $(oc get csr 2>/dev/null | grep -i pending | wc -l ) > 0 ))
+      codeblock
+      if (( $(oc get csr 2>/dev/null | grep -i pending | wc -l ) -gt 0 ))
       then
          table "Pending CSRs" "FAIL" ${section}
       else
@@ -799,11 +801,11 @@ security(){
       sub "Cluster Identities"
       quote "By default, only a kubeadmin user exists on your cluster. Identity providers create a Custom Resource that describes that identity provider and add it to the cluster."
       link "https://docs.openshift.com/container-platform/${cv}/authentication/identity_providers/configuring-htpasswd-identity-provider.html#identity-provider-overview_configuring-htpasswd-identity-provider"
-      codeblock 
+      codeblock
       oc get identity >> ${adoc}
-      codeblock 
+      codeblock
       table "Cluster Identities" "REVIEW" ${section}
-      #TODO review if the result from `oc get users` is the same  
+      #TODO review if the result from `oc get users` is the same
    }
 
    grants(){
@@ -825,7 +827,7 @@ security(){
       sub "Rolebindings"
       quote "Binding, or adding, a role to users or groups gives the user or group the access that is granted by the role."
       link "https://docs.openshift.com/container-platform/${cv}/post_installation_configuration/preparing-for-users.html#adding-roles_post-install-preparing-for-users"
-      codeblock 
+      codeblock
       oc get rolebindings -A | head | column -t | awk '{print $1,$2,"\n","\t\t",$3}' >> ${adoc}
       codeblock
       table "Rolebindings" "REVIEW" ${section}
@@ -835,7 +837,7 @@ security(){
       sub "Cluster Rolebindings"
       quote "Binding, or adding, a role to users or groups gives the user or group the access that is granted by the role."
       link "https://docs.openshift.com/container-platform/${cv}/post_installation_configuration/preparing-for-users.html#adding-roles_post-install-preparing-for-users"
-      codeblock 
+      codeblock
       oc get clusterrolebindings | awk '{print $1,$2}' | sed 's/ClusterRole\///g' | sort -k2 >> ${adoc}
       codeblock
       table "Cluster Rolebindings" "REVIEW" ${section}
@@ -846,10 +848,10 @@ security(){
       quote "The user kubeadmin gets cluster-admin role automatically applied and is treated as the root user for the cluster. After installation and once an identity provider is configured is recommended to remove it."
       link "https://docs.openshift.com/container-platform/${cv}/authentication/remove-kubeadmin.html"
       # oc -n kube-system get secret kubeadmin -o yaml | grep "kubeadmin:" | awk '{print $NF}' | base64 -d
-      codeblock 
+      codeblock
       oc get secret -n kube-system kubeadmin 2>/dev/null >> ${adoc}
-      codeblock 
-      if (( $(oc get secret -n kube-system kubeadmin --no-headers 2>/dev/null | wc -l ) > 0 ))
+      codeblock
+      if (( $(oc get secret -n kube-system kubeadmin --no-headers 2>/dev/null | wc -l ) -gt 0 ))
       then
          table "Kubeadmin Secret" "FAIL" ${section}
       else
@@ -861,9 +863,9 @@ security(){
       sub "Identity Providers"
       quote "By default, only a kubeadmin user exists on your cluster. Identity providers create a Custom Resource that describes that identity provider and add it to the cluster."
       link "https://docs.openshift.com/container-platform/${cv}/authentication/identity_providers/configuring-htpasswd-identity-provider.html#identity-provider-overview_configuring-htpasswd-identity-provider"
-      codeblock 
+      codeblock
       oc get oauth cluster -o json | jq -r '.spec.identityProviders' >> ${adoc}
-      codeblock 
+      codeblock
       table "Identity Providers" "REVIEW" ${section}
    }
 
@@ -871,9 +873,9 @@ security(){
       sub "Cluster Authentications"
       quote "To interact with OCP, you must first authenticate to the cluster with a user associated in authorization layer by requests to the API."
       link "https://docs.openshift.com/container-platform/${cv}/authentication/understanding-authentication.html"
-      codeblock 
+      codeblock
       oc get authentications -o json 2>/dev/null | jq '.items[] | .metadata.annotations, .spec.webhookTokenAuthenticator, .status' >> ${adoc}
-      codeblock 
+      codeblock
       table "Cluster Authentications" "REVIEW" ${section}
    }
 
@@ -881,7 +883,7 @@ security(){
       sub "Kubelet Configurations"
       quote "OCP uses a KubeletConfig custom resource (CR) to manage the configuration of nodes that creates a managed machine config to override setting on the node."
       link "https://docs.openshift.com/container-platform/${cv}/nodes/nodes/nodes-nodes-managing.html"
-      codeblock 
+      codeblock
       oc get kubeletconfig -o json 2>/dev/null >> ${adoc}
       codeblock
       table "Kubelet Configurations" "REVIEW" ${section}
@@ -893,10 +895,10 @@ security(){
       link "https://docs.openshift.com/container-platform/${cv}/serverless/discover/serverless-channels.html"
 
       echo "==== Subscriptions from non-stable channels" >> ${adoc}
-      codeblock 
+      codeblock
       oc get subscriptions -A 2>/dev/null >> ${adoc}
       codeblock
-      if (( $(oc get subscriptions -A --no-headers 2>/dev/null | grep -v stable | wc -l ) > 0 ))
+      if (( $(oc get subscriptions -A --no-headers 2>/dev/null | grep -v stable | wc -l ) -gt 0 ))
       then
          table "Cluster Subscriptions from non-stable channels" "FAIL" ${section}
       else
@@ -906,31 +908,31 @@ security(){
       echo "==== Subscriptions Catalog Health" >> ${adoc}
       state="PASS"
       for pod in $(oc get subscriptions -A --no-headers 2>/dev/null | awk '{print $1,$2}')
-      do 
-         if (( $(oc get subscriptions -n ${pod} -o json | jq '. | .status.catalogHealth[].healthy' 2>/dev/null | grep -v true | wc -l ) > 0 ))
-         then 
+      do
+         if (( $(oc get subscriptions -n ${pod} -o json | jq '. | .status.catalogHealth[].healthy' 2>/dev/null | grep -v true | wc -l ) -gt 0 ))
+         then
             echo "**${pod}**"
             codeblock
             oc get subscriptions -n ${pod} -o json | jq '. | .status.catalogHealth[]' 2>/dev/null >> ${adoc}
             state="FAIL"
             codeblock
-         fi 
-      done 
+         fi
+      done
       table "Cluster Subscriptions Catalog Health" ${state} ${section}
-      
+
       echo "==== Subscriptions Conditions" >> ${adoc}
       state="PASS"
       for pod in $(oc get subscriptions -A --no-headers 2>/dev/null | awk '{print $1,$2}')
-      do 
-         if (( $(oc get subscriptions -n ${pod} -o json | jq '. | .status.conditions[].status' 2>/dev/null | grep -v False | wc -l) > 0 ))
-         then 
+      do
+         if (( $(oc get subscriptions -n ${pod} -o json | jq '. | .status.conditions[].status' 2>/dev/null | grep -v False | wc -l) -gt 0 ))
+         then
             echo "**${pod}**"
             codeblock
             oc get subscriptions -n openshift-operators openshift-gitops-operator -o json | jq '. | .status.conditions[]' 2>/dev/null >> ${adoc}
             state="FAIL"
             codeblock
-         fi 
-      done 
+         fi
+      done
       table "Cluster Subscriptions Conditions" ${state} ${section}
    }
 
@@ -941,12 +943,12 @@ security(){
       codeblock
       oc get validatingwebhookconfigurations -A -o json 2>/dev/null | jq '.items[].webhooks[]' | grep -v 'caBundle' >> ${adoc}
       # oc get validatingwebhookconfigurations -A 2>/dev/null >> ${adoc}
-      codeblock 
+      codeblock
       sub "Mutating WebHook Configurations"
-      codeblock 
+      codeblock
       oc get mutatingwebhookconfigurations -A -o json 2>/dev/null | jq '.items[].webhooks[]' | grep -v 'caBundle' >> ${adoc}
       # oc get mutatingwebhookconfigurations -A 2>/dev/null >> ${adoc}
-      codeblock 
+      codeblock
       table "WebHooks" "REVIEW" ${section}
    }
 
@@ -957,22 +959,22 @@ security(){
       controllerpods=$(oc get pods -n openshift-kube-controller-manager -l app=kube-controller-manager -o custom-columns=POD:.metadata.name --no-headers)
       schedulerpods=$(oc get pods -n openshift-kube-scheduler -l app=openshift-kube-scheduler -o custom-columns=POD:.metadata.name --no-headers)
       etcdpods=$(oc get pods -n openshift-etcd -l app=etcd -o custom-columns=POD:.metadata.name --no-headers)
-      
+
       verify(){
          file=$1
          namespace=$2
          list=$3
          for pod in ${list[@]}
-         do 
+         do
             result=($(oc exec -n ${namespace} ${pod} 2>/dev/null -- stat -c "%a %U %G" ${file}))
             if [[ "644" != ${result[0]} ]] || [[ "root" != ${result[1]} ]] || [[ "root" != ${result[2]} ]]
-            then 
+            then
                echo "${file}: [ERROR] - ${result[@]}" >> ${adoc}
                state="FAIL"
-            else 
+            else
                echo "${file}: [OK]" >> ${adoc}
-            fi 
-         done 
+            fi
+         done
       }
 
       echo "==== Verification of API files permissions" >> ${adoc}
@@ -985,11 +987,11 @@ security(){
       table "API Versions" ${state} ${section}
    }
 
-   # Expiration of certificates in configmaps and secrets 
-   # oc get configmaps -A  
-   # oc get configmaps -n openshift-config   
+   # Expiration of certificates in configmaps and secrets
+   # oc get configmaps -A
+   # oc get configmaps -n openshift-config
 
-   # Includes 
+   # Includes
    pending_csr
    identities
    grants
@@ -1016,15 +1018,15 @@ storage(){
       for status in ${statuses[@]}
       do
          sub "${status} Persistent Volumes"
-         codeblock 
+         codeblock
          oc get pv -A -o wide 2>/dev/null | grep -w ${status} | column -t >> ${adoc}
-         if (( $(oc get pv -A -o wide 2>/dev/null | grep -w ${status} | wc -l ) > 0 ))
+         if (( $(oc get pv -A -o wide 2>/dev/null | grep -w ${status} | wc -l) -gt 0 ))
          then
             table "PV Status ${status}" "FAIL" ${section}
          else
             table "PV Status ${status}" "PASS" ${section}
          fi
-         codeblock 
+         codeblock
       done
    }
 
@@ -1035,15 +1037,15 @@ storage(){
       for status in ${statuses[@]}
       do
          sub "${status} Persistent Volumes Claims"
-         codeblock 
+         codeblock
          oc get pvc -A -o wide 2>/dev/null | grep -w ${status} | column -t >> ${adoc}
-         if (( $(oc get pvc -A -o wide 2>/dev/null | grep -w ${status} | wc -l ) > 0 ))
+         if (( $(oc get pvc -A -o wide 2>/dev/null | grep -w ${status} | wc -l) -gt 0 ))
          then
             table "PVC Status ${status}" "FAIL" ${section}
          else
             table "PVC Status ${status}" "PASS" ${section}
          fi
-         codeblock 
+         codeblock
       done
    }
 
@@ -1051,9 +1053,9 @@ storage(){
       sub "Storage Classes"
       quote "Claims can optionally request a specific storage class. Only PVs of the requested class, ones with the same storageClassName as the PVC, can be bound to the PVC."
       link "https://docs.openshift.com/container-platform/${cv}/storage/understanding-persistent-storage.html#pvc-storage-class_understanding-persistent-storage"
-      codeblock 
+      codeblock
       oc get storageclasses 2>/dev/null >> ${adoc}
-      codeblock 
+      codeblock
       table "Storage Classes" "REVIEW" ${section}
    }
 
@@ -1061,9 +1063,9 @@ storage(){
       sub "Quotas"
       quote "A resource quota provides constraints that limit aggregate resource consumption per project. It can limit the total amount of compute resources and storage that might be consumed by resources in that project."
       link "https://docs.openshift.com/container-platform/${cv}/applications/quotas/quotas-setting-per-project.html"
-      codeblock 
+      codeblock
       oc get quota -A 2>/dev/null >> ${adoc}
-      codeblock 
+      codeblock
       table "Quotas" "REVIEW" ${section}
    }
 
@@ -1073,22 +1075,22 @@ storage(){
       state="PASS"
       quote "A snapshot represents the state of the storage volume in a cluster at a particular point in time. Volume snapshots can be used to provision a new volume."
       link "https://docs.openshift.com/container-platform/${cv}/storage/container_storage_interface/persistent-storage-csi-snapshots.html"
-      codeblock 
-      while read LINE 
-      do 
+      codeblock
+      while read LINE
+      do
          data=(${LINE})
          if [[ ${data[0]} == "NAMESPACE" ]]
-         then 
-            echo ${data[@]} | column -t >> ${adoc} 
+         then
+            echo ${data[@]} | column -t >> ${adoc}
          else
-            if (( $(echo ${data[-1]} | tr -d "d") > ${threshold} ))
+            if (( $(echo ${data[-1]} | tr -d "d") -gt ${threshold} ))
             then
                echo ${data[@]} | column -t >> ${adoc}
                state="FAIL"
             fi
          fi
       done < <(oc get volumesnapshot -A 2>/dev/null)
-      codeblock 
+      codeblock
       table "Volume Snapshots Age" ${state} ${section}
    }
 
@@ -1096,17 +1098,17 @@ storage(){
       sub "CSI Drivers"
       quote "CSI Drivers provision inline ephemeral volumes that contain the contents of Secret or ConfigMap objects."
       link "https://docs.openshift.com/container-platform/${cv}/storage/container_storage_interface/ephemeral-storage-shared-resource-csi-driver-operator.html"
-      codeblock 
+      codeblock
       oc get csidrivers 2>/dev/null | column -t >> ${adoc}
-      codeblock 
+      codeblock
       table "CSI Drivers" "REVIEW" ${section}
    }
 
    csinodes(){
       sub "CSI Nodes"
-      codeblock 
+      codeblock
       oc get csinodes 2>/dev/null | column -t >> ${adoc}
-      codeblock 
+      codeblock
       table  "CSI Nodes" "REVIEW" ${section}
    }
 
@@ -1114,12 +1116,12 @@ storage(){
       sub "Feature Gates"
       quote "FeatureGates enable specific feature sets in your cluster. A feature set is a collection of OpenShift Container Platform features that are not enabled by default."
       link "https://docs.openshift.com/container-platform/${cv}/nodes/clusters/nodes-cluster-enabling-features.html"
-      codeblock 
+      codeblock
       if [ "{}" != $(oc get featuregates -A -o json 2>/dev/null | jq -c '.items[].spec') ]
       then
          oc get featuregates -A -o json 2>/dev/null | jq -c '.items[].spec' >> ${adoc}
-      fi 
-      codeblock 
+      fi
+      codeblock
       table "Feature Gates" "REVIEW" ${section}
    }
 
@@ -1127,13 +1129,13 @@ storage(){
       sub "Horizontal Pod AutoScalers"
       quote "You can create a horizontal pod autoscaler to specify the minimum and maximum number of pods you want to run, as well as the CPU utilization or memory utilization your pods should target."
       link "https://docs.openshift.com/container-platform/${cv}/nodes/pods/nodes-pods-autoscaling.html"
-      codeblock 
+      codeblock
       oc get horizontalpodautoscalers -A 2>/dev/null >> ${adoc}
-      codeblock 
+      codeblock
       table "Horizontal Pod AutoScalers" "REVIEW" ${section}
    }
 
-   # Includes 
+   # Includes
    pv_status
    pvc_status
    storage_classes
@@ -1144,8 +1146,8 @@ storage(){
    featuregate
    horizontalpodautoscalers
 
-   #TODO: Based on the available storage classes create a PVC and PV and delete for each 
-      # Create and Delete PVC 
+   #TODO: Based on the available storage classes create a PVC and PV and delete for each
+      # Create and Delete PVC
       # Create and Delete PV
       # Create and Delete Annotated Local Storage
       # Create and Delete Local Storage Operator Group
@@ -1153,7 +1155,7 @@ storage(){
       # Statically provisioning hostPath volumes
    #TODO: add  images, prune and imagestreams
 
-} 
+}
 
 performance(){
    section="performance"
@@ -1164,9 +1166,9 @@ performance(){
       sub "Nodes Memory Utilization"
       quote "All nodes meet the minimum requirements and are currently allocated to an amount appropriate to handle the workloads deployed to the cluster"
       link "https://docs.openshift.com/container-platform/${cv}/scalability_and_performance/planning-your-environment-according-to-object-maximums.html#cluster-maximums-environment_object-limits"
-      codeblock 
+      codeblock
       oc adm top nodes --no-headers | sort -nrk5 2>/dev/null | head -${limit} | awk '{print $1,$4,$5}' >> ${adoc}
-      codeblock 
+      codeblock
       table "Nodes Memory Utilization" "REVIEW" ${section}
    }
 
@@ -1175,9 +1177,9 @@ performance(){
       sub "Nodes CPU Utilization"
       quote "All nodes meet the minimum requirements and are currently allocated to an amount appropriate to handle the workloads deployed to the cluster"
       link "https://docs.openshift.com/container-platform/${cv}/scalability_and_performance/planning-your-environment-according-to-object-maximums.html#cluster-maximums-environment_object-limits"
-      codeblock 
+      codeblock
       oc adm top nodes --no-headers | sort -nrk3 2>/dev/null | head -${limit} | awk '{print $1,$2,$3}' >> ${adoc}
-      codeblock 
+      codeblock
       table "Nodes CPU Utilization" "REVIEW" ${section}
    }
 
@@ -1185,9 +1187,9 @@ performance(){
       sub "Pods Memory Utilization"
       quote "As an administrator, you can view the pods in your cluster and to determine the health of those pods and the cluster as a whole."
       link "https://docs.openshift.com/container-platform/${cv}/nodes/pods/nodes-pods-viewing.html"
-      codeblock 
+      codeblock
       oc adm top pods -A --sort-by=memory --no-headers 2>/dev/null | head -21 | column -t | awk '{print $1,$2,$4}' >> ${adoc}
-      codeblock 
+      codeblock
       table "Pods Memory Utilization" "REVIEW" ${section}
    }
 
@@ -1195,21 +1197,21 @@ performance(){
       sub "Pods CPU utilization"
       quote "As an administrator, you can view the pods in your cluster and to determine the health of those pods and the cluster as a whole."
       link "https://docs.openshift.com/container-platform/${cv}/nodes/pods/nodes-pods-viewing.html"
-      codeblock 
+      codeblock
       oc adm top pods -A --sort-by=cpu --no-headers 2>/dev/null | head -21 | column -t | awk '{print $1,$2,$3}' >> ${adoc}
-      codeblock 
+      codeblock
       table "Pods CPU Utilization" "REVIEW" ${section}
    }
 
-   # Includes 
+   # Includes
    nodes_memory
    nodes_cpu
    pods_memory
    pods_cpu
 
-   # oc get tuned -A 
-   # oc get limits -A 
-   # oc get appliedclusterresourcequotas -A 
+   # oc get tuned -A
+   # oc get limits -A
+   # oc get appliedclusterresourcequotas -A
 }
 
 logging(){
@@ -1220,16 +1222,16 @@ logging(){
       sub "Logging Resources"
       quote "The logging subsystem aggregates all the logs from the cluster and stores them in a default log store. You can use the Kibana web console to visualize log data."
       link "https://docs.openshift.com/container-platform/4.10/logging/cluster-logging.html"
-      codeblock 
+      codeblock
       oc get all -n openshift-logging 2>/dev/null >> ${adoc}
-      codeblock 
+      codeblock
       table "Logging Resources" "REVIEW" ${section}
    }
 
-   # Includes 
+   # Includes
    logging_resources
-   # oc get all -n openshift-logging | grep collector | awk '{print $3}' | sort | uniq -cd 
-   # oc get all -n openshift-logging daemonset.apps/collector | grep -A10 Selector 
+   # oc get all -n openshift-logging | grep collector | awk '{print $3}' | sort | uniq -cd
+   # oc get all -n openshift-logging daemonset.apps/collector | grep -A10 Selector
 
 }
 
@@ -1242,12 +1244,12 @@ monitoring (){
       quote "The monitoring stack provides monitoring for core platform components. You also have the option to enable monitoring for user-defined projects."
       link "https://docs.openshift.com/container-platform/4.10/monitoring/monitoring-overview.html"
       oc get pods -n openshift-monitoring | grep prometheus 2>/dev/null >> ${adoc}
-      if (( $(oc get pods -n openshift-monitoring | grep prometheus 2>/dev/null | wc -l ) > 0 ))
-      then  
+      if (( $(oc get pods -n openshift-monitoring | grep prometheus 2>/dev/null | wc -l ) -gt 0 ))
+      then
          sub "Prometheus Context"
-         codeblock 
+         codeblock
          oc get prometheuses -A -o json 2>/dev/null | jq -c '.items[].spec | .securityContext,.retention,.resources' >> ${adoc}
-         codeblock 
+         codeblock
       fi
       table "Prometheus Status" "REVIEW" ${section}
    }
@@ -1256,17 +1258,17 @@ monitoring (){
       sub "Prometheus Rules"
       quote "Users can then create and configure user-defined alert routing by creating or editing the AlertmanagerConfig objects."
       link "https://docs.openshift.com/container-platform/${cv}/monitoring/enabling-alert-routing-for-user-defined-projects.html"
-      if (( $(oc get pods -n openshift-monitoring | grep prometheuss 2>/dev/null | wc -l ) > 0 ))
+      if (( $(oc get pods -n openshift-monitoring | grep prometheus 2>/dev/null | wc -l ) -gt 0 ))
       then
-         while read LINE 
-         do 
+         while read LINE
+         do
             echo "==== ${LINE}" >> ${adoc}
-            codeblock 
+            codeblock
             oc get prometheusrules -n openshift-windows-machine-config-operator windows-prometheus-k8s-rules \
                -o json 2>/dev/null | jq '.spec[][] | .name,.rules[].expr' >> ${adoc}
-            codeblock 
+            codeblock
          done < <(oc get prometheusrules -A --no-headers 2>/dev/null | awk '{print $1,$2}')
-      fi 
+      fi
       table "Prometheus Rules" "REVIEW" ${section}
    }
 
@@ -1274,25 +1276,25 @@ monitoring (){
       sub "Service Monitors"
       quote "Cluster components are monitored by scraping metrics exposed through service endpoints. You can also configure metrics collection for user-defined projects."
       link "https://docs.openshift.com/container-platform/${cv}/monitoring/managing-metrics.html"
-      codeblock 
+      codeblock
       oc get servicemonitors -A 2>/dev/null | awk '{print $1,$2}' | column -t >> ${adoc}
-      codeblock 
+      codeblock
       table "Sevice Monitors" "REVIEW"  ${section}
    }
 
    podmonitors(){
       sub "Pod Monitors"
-      codeblock 
+      codeblock
       oc get podmonitors -A 2>/dev/null | awk '{print $1,$2}' | column -t >> ${adoc}
-      codeblock 
+      codeblock
       table "Pod Monitors" "REVIEW"  ${section}
    }
 
    alertmanagers(){
       sub "Alert Managers"
-      codeblock 
+      codeblock
       oc get alertmanagers -A 2>/dev/null >> ${adoc}
-      codeblock 
+      codeblock
       table "Alert Managers" "REVIEW"  ${section}
    }
 
@@ -1308,27 +1310,27 @@ monitoring (){
          telemeter-client
       )
       state="PASS"
-      oc get pods -n openshift-monitoring 2>/dev/null | grep -w Running > /tmp/ocp-health.tmp 
+      oc get pods -n openshift-monitoring 2>/dev/null | grep -w Running > /tmp/ocp-health.tmp
       echo "[%header,cols='3,1']" >> ${adoc}
       echo "|===" >> ${adoc}
       echo "|Agent|Status" >> ${adoc}
       for val in ${expect[@]}
-      do 
-         grep ${val} /tmp/ocp-health.tmp >/dev/null 
+      do
+         grep ${val} /tmp/ocp-health.tmp >/dev/null
          if [ $? -eq 0 ]
-         then 
+         then
             echo "|${val}|OK" >> ${adoc}
          else
-            echo "|${val}|ERROR" >> ${adoc} 
+            echo "|${val}|ERROR" >> ${adoc}
             state="FAIL"
-         fi 
-      done 
-      rm /tmp/ocp-health.tmp 
+         fi
+      done
+      rm /tmp/ocp-health.tmp
       echo "|===" >> ${adoc}
       table "Monitoring Agents & Dashboards" ${state} ${section}
    }
 
-   # Includes 
+   # Includes
    prometheus
    prometheus_rules
    servicemonitors
@@ -1346,9 +1348,9 @@ network(){
       sub "Enabled Networks"
       quote "By default, OCP allocates each pod an internal IP address and Pods and their containers can network, but clients outside the cluster do not have networking access."
       link "https://docs.openshift.com/container-platform/${cv}/networking/understanding-networking.html"
-      codeblock 
+      codeblock
       oc get network cluster -o json 2>/dev/null | jq '.spec' >> ${adoc}
-      codeblock 
+      codeblock
       table "Enabled Networks" "REVIEW" ${section}
    }
 
@@ -1356,13 +1358,13 @@ network(){
       sub "Network Policies"
       quote "In a cluster using a Kubernetes Container Network Interface (CNI) plug-in that supports Kubernetes network policy, network isolation is controlled entirely by NetworkPolicy objects."
       link "https://docs.openshift.com/container-platform/${cv}/networking/network_policy/about-network-policy.html"
-      while read LINE 
-      do 
+      while read LINE
+      do
          data=(${LINE})
          echo "==== ${data[@]}"  >> ${adoc}
-         codeblock 
+         codeblock
          oc get networkpolicies -n ${data[@]} -o json | jq -c '.spec | "ingress:",.ingress,"Egress:",.egress'  | tr -d '"[]{}' >> ${adoc}
-         codeblock 
+         codeblock
          echo "" >> ${adoc}
       done < <(oc get networkpolicies -A --no-headers 2>/dev/null | awk '{print $1,$2}')
       table "Network Policies" "REVIEW" ${section}
@@ -1372,9 +1374,9 @@ network(){
       sub "Cluster Networks"
       quote "ClusterNetwork describes the cluster network. There is normally only one object of this type, named 'default', which is created by the SDN network plugin based on the master configuration when the cluster is brought up for the first time."
       link "https://docs.openshift.com/container-platform/${cv}/rest_api/network_apis/clusternetwork-network-openshift-io-v1.html"
-      codeblock 
+      codeblock
       oc get clusternetworks 2>/dev/null >> ${adoc}
-      codeblock 
+      codeblock
       table "Cluster Networks" "REVIEW" ${section}
    }
 
@@ -1382,9 +1384,9 @@ network(){
       sub "Host Subnets"
       quote "HostSubnet describes the container subnet network on a node. The HostSubnet object must have the same name as the Node object it corresponds to."
       link "https://docs.openshift.com/container-platform/${cv}/rest_api/network_apis/hostsubnet-network-openshift-io-v1.html"
-      codeblock 
+      codeblock
       oc get hostsubnet 2>/dev/null >> ${adoc}
-      codeblock 
+      codeblock
       table "Host Subnets" "REVIEW" ${section}
    }
 
@@ -1392,9 +1394,9 @@ network(){
       sub "Cluster Proxy"
       quote "If a global proxy is configured on the OpenShift Container Platform cluster, OLM automatically configures Operators that it manages with the cluster-wide proxy."
       link "https://docs.openshift.com/container-platform/${cv}/operators/admin/olm-configuring-proxy-support.html"
-      codeblock 
+      codeblock
       oc get proxy cluster -o json 2>/dev/null | jq '.' >> ${adoc}
-      codeblock 
+      codeblock
       table "Cluster Proxy" "REVIEW" ${section}
    }
 
@@ -1416,7 +1418,7 @@ network(){
       echo "|===" >> ${adoc}
       echo "|POD|STATUS" >> ${adoc}
       for pod in $(oc get podnetworkconnectivitycheck -n ${ns} --no-headers  2>/dev/null | awk '{print $1}')
-      do 
+      do
          status=$(oc get podnetworkconnectivitycheck ${pod} -n ${ns} --no-headers -o json 2>/dev/null | \
             jq '.status.conditions[].type' | tr -d '"' )
          if grep -qv "Reachable" <<< ${status}
@@ -1433,9 +1435,9 @@ network(){
       sub "Routes"
       quote "A route allows you to host your application at a public URL. It can either be secure or unsecured, depending on the network security configuration of your application."
       link "https://docs.openshift.com/container-platform/${cv}/networking/routes/route-configuration.html"
-      codeblock 
+      codeblock
       oc get route -A 2>/dev/null | awk '{print $1,$2,"\n","\t\t",$3,$4,$5,$6,$7,$8}' >> ${adoc}
-      codeblock 
+      codeblock
       table "Routes" "REVIEW" ${section}
    }
 
@@ -1443,9 +1445,9 @@ network(){
       sub "Egress Network Policy"
       quote "You can create an egress firewall for a project that restricts egress traffic leaving your OpenShift Container Platform cluster."
       link "https://docs.openshift.com/container-platform/${cv}/networking/openshift_sdn/configuring-egress-firewall.html"
-      codeblock 
+      codeblock
       oc get egressnetworkpolicy -A 2>/dev/null >> ${adoc}
-      codeblock 
+      codeblock
       table "Egress Network Policy" "REVIEW" ${section}
    }
 
@@ -1454,12 +1456,12 @@ network(){
       quote "OpenShift Container Platform provides methods for communicating from outside the cluster with services running in the cluster. This method uses an Ingress Controller."
       link "https://docs.openshift.com/container-platform/${cv}/networking/nw-ingress-controller-endpoint-publishing-strategies.html"
       for ingctl in $(oc get ingresscontrollers -n openshift-ingress-operator --no-headers | awk '{print $1}')
-      do 
+      do
          echo "==== ${ingctl}" >> ${adoc}
-         codeblock 
+         codeblock
          oc get ingresscontrollers -n openshift-ingress-operator ${ingctl} -o json 2>/dev/null | jq '.status' >> ${adoc}
-         codeblock 
-      done 
+         codeblock
+      done
       table "Ingress Controllers" "REVIEW" ${section}
    }
 
@@ -1467,9 +1469,9 @@ network(){
       sub "Ingresses"
       quote "OpenShift Container Platform provides methods for communicating from outside the cluster with services running in the cluster. This method uses an Ingress Controller."
       link "https://docs.openshift.com/container-platform/${cv}/networking/configuring_ingress_cluster_traffic/configuring-ingress-cluster-traffic-ingress-controller.html"
-      codeblock 
-      oc get ingresses -A 2>/dev/null >> ${adoc} 
-      codeblock 
+      codeblock
+      oc get ingresses -A 2>/dev/null >> ${adoc}
+      codeblock
       table "Ingresses" "REVIEW" ${section}
    }
 
@@ -1478,19 +1480,19 @@ network(){
       quote "OpenShift Container Platform provides methods for communicating from outside the cluster with services running in the cluster. This method uses an Ingress Controller."
       link "https://docs.openshift.com/container-platform/${cv}/networking/configuring_ingress_cluster_traffic/configuring-ingress-cluster-traffic-ingress-controller.html"
       for ingctl in $(oc get ingresscontrollers -n openshift-ingress-operator --no-headers | awk '{print $1}')
-      do 
+      do
          for pod in $(oc get pods -n openshift-ingress --no-headers | grep ${ingctl} | head -1 | awk '{print $1}')
          do
             echo "**${pod}**" >> ${adoc}
             echo "**haproxy.conf $(oc exec -n openshift-ingress ${pod} -- haproxy -c -f haproxy.config)**" >> ${adoc}
-            codeblock 
+            codeblock
             echo "SSL Configurations:" >> ${adoc}
             oc exec -n openshift-ingress ${pod} -- grep ssl-default-bind haproxy.config >> ${adoc}
             echo "Frontends:" >> ${adoc}
             oc exec -n openshift-ingress ${pod} -- sed -n '/^defaults/,/\Z/p' haproxy.config | grep -wE "frontend |bind |default_backend "  >> ${adoc}
             echo "Backends:" >> ${adoc}
             oc exec -n openshift-ingress ${pod} -- grep -e ^backend haproxy.config >> ${adoc}
-            codeblock 
+            codeblock
          done
       done
       table "Ingress Controller Pods" "REVIEW" ${section}
@@ -1500,7 +1502,7 @@ network(){
       clustermtu=$(oc get clusternetworks -o json 2>/dev/null | jq '.items[].mtu ')
       clustersubnet=$(oc get clusternetworks -o json 2>/dev/null | jq '.items[].network' | tr -d '"' | cut -c1-7)
       if [ -z ${clustermtu+x} ] || [ -z ${clustersubnet+x} ]
-      then 
+      then
          nodemtu=$(oc debug $(oc get nodes --no-headers -o name 2>/dev/null| head -1) -- ip a 2>/dev/null | grep ${clustersubnet} -B2 | grep mtu | awk -Fmtu '{print $2}' | awk '{print $1}';)
          if [ ${clustermtu} -lt ${nodemtu} ]
          then
@@ -1512,7 +1514,7 @@ network(){
       fi
    }
 
-   # Includes 
+   # Includes
    enabled_network
    networkpolicies
    clusternetworks
@@ -1527,9 +1529,9 @@ network(){
    mtu_size
    podnetworkconnectivitycheck
 
- #TODO: 
- # for NODE in `oc get node --no-headers|awk '{print$1}'`; do echo $NODE; oc debug node/$NODE -- ip a; echo "=====";done 
- # for NODE in `oc get node --no-headers|awk '{print$1}'`; do echo $NODE; oc debug node/$NODE -- chroot /host /usr/bin/chronyc -m sources tracking; echo "=====";done 
+ #TODO:
+ # for NODE in `oc get node --no-headers|awk '{print$1}'`; do echo $NODE; oc debug node/$NODE -- ip a; echo "=====";done
+ # for NODE in `oc get node --no-headers|awk '{print$1}'`; do echo $NODE; oc debug node/$NODE -- chroot /host /usr/bin/chronyc -m sources tracking; echo "=====";done
 }
 
 operators(){
@@ -1542,8 +1544,8 @@ operators(){
       link "https://docs.openshift.com/container-platform/${cv}/support/troubleshooting/troubleshooting-operator-issues.html"
       codeblock
       oc get clusteroperators --no-headers | awk '$5 == "True"' >> ${adoc}
-      if (( $(oc get clusteroperators --no-headers | awk '$5 == "True"' | wc -l ) > 0 ))
-      then 
+      if (( $(oc get clusteroperators --no-headers | awk '$5 == "True"' | wc -l ) -gt 0 ))
+      then
          table "Degraded Cluster Operators" "FAIL" ${section}
       else
          table "Degraded Cluster Operators" "PASS" ${section}
@@ -1557,8 +1559,8 @@ operators(){
       link "https://docs.openshift.com/container-platform/${cv}/support/troubleshooting/troubleshooting-operator-issues.html"
       codeblock
       oc get clusteroperators --no-headers |awk '$3 == "False"' >> ${adoc}
-      if (( $(oc get clusteroperators --no-headers | awk '$3 == "False"' | wc -l ) > 0 ))
-      then 
+      if (( $(oc get clusteroperators --no-headers | awk '$3 == "False"' | wc -l ) -gt 0 ))
+      then
          table "Unavailable Cluster Operators" "FAIL" ${section}
       else
          table "Unavailable Cluster Operators" "PASS" ${section}
@@ -1570,9 +1572,9 @@ operators(){
       sub "Cluster Services Versions"
       quote "A cluster service version (CSV), is a YAML manifest created from Operator metadata that assists Operator Lifecycle Manager (OLM) in running the Operator in a cluster."
       link "https://docs.openshift.com/container-platform/${cv}/operators/operator_sdk/osdk-generating-csvs.html"
-      codeblock 
+      codeblock
       oc get clusterserviceversion -A -o wide --no-headers | awk '{print $2}' | sort | uniq  >> ${adoc}
-      codeblock 
+      codeblock
       table "Cluster Services Versions" "REVIEW" ${section}
    }
 
@@ -1580,21 +1582,21 @@ operators(){
       sub "Operator Groups"
       quote "An Operator group, defined by the OperatorGroup resource, provides multitenant configuration to OLM-installed Operators. An Operator group selects target namespaces in which to generate required RBAC access for its member Operators."
       link "https://docs.openshift.com/container-platform/${cv}/operators/understanding/olm/olm-understanding-operatorgroups.html"
-      codeblock 
+      codeblock
       oc get operatorgroups -A 2>/dev/null >> ${adoc}
-      codeblock 
+      codeblock
       table "Operator Groups" "REVIEW" ${section}
    }
 
    operatorsources(){
       sub "Operator Sources"
-      codeblock 
+      codeblock
       oc get operatorsources -A 2>/dev/null  >> ${adoc}
-      codeblock 
+      codeblock
       table "Operator Sources" "REVIEW" ${section}
    }
 
-   # Includes 
+   # Includes
    operators_degraded
    operators_unavailable
    cluster_services
@@ -1605,18 +1607,18 @@ operators(){
 mesh(){
    section="mesh"
    title ${section}
-   cont='false' 
+   cont='false'
 
    serviceMeshControlPlane(){
       oc get servicemeshcontrolplane -A &>/dev/null
       if [ $? == 0 ]
-      then 
+      then
          title "Service Mesh"
          cont='true'
          sub "Service Mesh ControlPlane"
-         codeblock 
+         codeblock
          oc get servicemeshcontrolplane -A 2>/dev/null  >> ${adoc}
-         codeblock 
+         codeblock
          table "Service Mesh ControlPlane" "REVIEW" ${section}
       fi
    }
@@ -1627,23 +1629,23 @@ mesh(){
          sub "Service Mesh Members"
          codeblock
          oc get servicemeshmember -A 2>/dev/null  >> ${adoc}
-         codeblock 
+         codeblock
          table "Service Mesh Members" "REVIEW" ${section}
       fi
    }
 
    serviceMeshMemberRoll(){
       if [ cont == 'true' ]
-      then 
+      then
          sub "Service Mesh Member Rolls"
-         codeblock 
+         codeblock
          oc get servicemeshmemberroll -A 2>/dev/null  >> ${adoc}
-         codeblock 
+         codeblock
          table "Service Mesh Members Rolls" "REVIEW" ${section}
       fi
    }
 
-   # Includes 
+   # Includes
    serviceMeshControlPlane
    serviceMeshMember
    serviceMeshMemberRoll
@@ -1663,14 +1665,14 @@ applications(){
       # Deploy application if project succeded
       oc project schrodingers-cat >/dev/null
       if [ $? -eq 0 ]
-      then 
+      then
          # Create Sample App
          oc new-app https://github.com/sclorg/nodejs-ex -l name=sample_app | grep '\-\-\>' >> ${adoc}
          sleep 10
          # Verify application status
          oc status | grep "svc/nodejs-ex" >> ${adoc}
          if [ $? -ne 0 ]
-         then 
+         then
             echo "WARNING: Unable to deploy DEMO application!" >> ${adoc}
             state="FAIL"
          else
@@ -1691,54 +1693,55 @@ applications(){
       codeblock
       oc get deployment -A 2>/dev/null | grep -E "0/[0-9]|NAMESPACE" | column -t >> ${adoc}
       codeblock
-      if (( $(oc get deployment -A 2>/dev/null | grep -E "0/[0-9]|NAMESPACE" | wc -l) > 0 ))
-      then 
+      if (( $(oc get deployment -A 2>/dev/null | grep -E "0/[0-9]|NAMESPACE" | wc -l) -gt 0 ))
+      then
          table "Non-Ready Deployments" "FAIL" ${section}
-      else 
+      else
          table "Non-Ready Deployments" "PASS" ${section}
-      fi 
+      fi
    }
 
    non_available_deployments(){
       sub "Unavailable Deployments"
-      codeblock 
+      codeblock
       oc get deployment -A | awk '$(NF-1)=="0" || $1=="NAMESPACE"' | column -t >> ${adoc}
-      codeblock 
-      if (( $(oc get deployment -A | awk '$(NF-1)=="0" || $1=="NAMESPACE"' | wc -l) > 0 ))
-      then 
+      codeblock
+      if (( $(oc get deployment -A | awk '$(NF-1)=="0" || $1=="NAMESPACE"' | wc -l) -gt 0 ))
+      then
          table "Unavailable Deployments" "FAIL" ${section}
-      else 
+      else
          table "Unavailable Deployments" "PASS" ${section}
-      fi 
+      fi
    }
 
    inactive_projects(){
       sub "Inactive projects"
-      codeblock 
+      codeblock
       oc get projects --no-headers 2>/dev/null | awk '$NF =! "Active"' >> ${adoc}
       codeblock
-      if (( $(oc get projects --no-headers 2>/dev/null | awk '$NF =! "Active"' | wc -l) > 0 ))
-      then 
+      if (( $(oc get projects --no-headers 2>/dev/null | awk '$NF =! "Active"'
+| wc -l) -gt 0 ))
+      then
          table "Inactive projects" "FAIL" ${section}
-      else 
+      else
          table "Inactive projects" "PASS" ${section}
-      fi 
+      fi
    }
 
    failed_builds(){
       sub "Failed Builds"
-      codeblock 
+      codeblock
       oc get builds -A 2>/dev/null | grep -vE "Complete|Running" >> ${adoc}
-      codeblock 
-      if (( $(oc get builds -A 2>/dev/null | grep -vE "Complete|Running" | wc -l) > 0 ))
-      then 
+      codeblock
+      if (( $(oc get builds -A 2>/dev/null | grep -vE "Complete|Running" | wc -l) -gt 0 ))
+      then
          table "Failed Builds" "FAIL" ${section}
-      else 
+      else
          table "Failed Builds" "PASS" ${section}
       fi
    }
 
-   # Includes 
+   # Includes
    deploy_demo_app
    non_ready_deployments
    non_available_deployments
@@ -1746,7 +1749,7 @@ applications(){
    failed_builds
 
    #TODO: Verify that installed applications are not using deprectated api versions
-   # oc get apiservices.apiregistration.k8s.io 
+   # oc get apiservices.apiregistration.k8s.io
 
 }
 
@@ -1755,23 +1758,23 @@ main(){
    executive_summary
    table      # Initializing the executive summary table
    commons
-   nodes 
+   nodes
    machines
-   etcd 
-   pods 
+   etcd
+   pods
    security
-   storage 
+   storage
    performance
-   logging 
-   monitoring  
-   network 
+   logging
+   monitoring
+   network
    operators
    mesh
-   applications 
+   applications
    table close_table_now   # Closing and adding the executive summary table
    addons
    generate_pdf
-} 
+}
 
 main ${1}
 
