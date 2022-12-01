@@ -323,7 +323,7 @@ commons(){
       codeblock
       if [ "True" == $(oc get clusterversion -o=jsonpath='{range .items[0].status.conditions[?(@.type=="Failing")]}{.status}') ]
       then
-         oc get clusterversion -o=json | jq '.items[].status.conditions' >> ${adoc}
+         oc get clusterversion -o=json | jq '.items[]?.status.conditions' >> ${adoc}
          table "Cluster Status Conditions" "REVIEW" ${section}
       else
          echo "All conditions are Normal" >> ${adoc}
@@ -416,7 +416,7 @@ nodes(){
          for node in $(oc get nodes --no-headers | sed 's/,/ /g' | awk '{print $1, $3}' | grep ${type} | awk '{print $1}')
          do
             results=$(oc get node ${node} -o json | \
-               jq -cr '.status.conditions[] | {type,status,reason}' | \
+               jq -cr '.status.conditions[]? | {type,status,reason}' | \
                tr -d '{}"' | \
                sed 's/type://g; s/status://g; s/reason://g; s/,/ /g' | \
                grep 'Pressure' | grep True)
@@ -470,7 +470,7 @@ nodes(){
       do
          result=$(oc get customresourcedefinitions \
             volumereplicationclasses.replication.storage.openshift.io -o json 2>/dev/null | \
-            jq '.status.conditions[].status')
+            jq '.status.conditions[]?.status')
          if grep -q False <<< ${result}
          then
             echo "**${crd}**" >> ${adoc}
@@ -874,7 +874,7 @@ security(){
       quote "To interact with OCP, you must first authenticate to the cluster with a user associated in authorization layer by requests to the API."
       link "https://docs.openshift.com/container-platform/${cv}/authentication/understanding-authentication.html"
       codeblock
-      oc get authentications -o json 2>/dev/null | jq '.items[] | .metadata.annotations, .spec.webhookTokenAuthenticator, .status' >> ${adoc}
+      oc get authentications -o json 2>/dev/null | jq '.items[]? | .metadata.annotations, .spec.webhookTokenAuthenticator, .status' >> ${adoc}
       codeblock
       table "Cluster Authentications" "REVIEW" ${section}
    }
@@ -909,11 +909,11 @@ security(){
       state="PASS"
       for pod in $(oc get subscriptions -A --no-headers 2>/dev/null | awk '{print $1,$2}')
       do
-         if (( $(oc get subscriptions -n ${pod} -o json | jq '. | .status.catalogHealth[].healthy' 2>/dev/null | grep -v true | wc -l ) -gt 0 ))
+         if (( $(oc get subscriptions -n ${pod} -o json | jq '. | .status.catalogHealth[]?.healthy' 2>/dev/null | grep -v true | wc -l ) -gt 0 ))
          then
             echo "**${pod}**"
             codeblock
-            oc get subscriptions -n ${pod} -o json | jq '. | .status.catalogHealth[]' 2>/dev/null >> ${adoc}
+            oc get subscriptions -n ${pod} -o json | jq '. | .status.catalogHealth[]?' 2>/dev/null >> ${adoc}
             state="FAIL"
             codeblock
          fi
@@ -924,11 +924,11 @@ security(){
       state="PASS"
       for pod in $(oc get subscriptions -A --no-headers 2>/dev/null | awk '{print $1,$2}')
       do
-         if (( $(oc get subscriptions -n ${pod} -o json | jq '. | .status.conditions[].status' 2>/dev/null | grep -v False | wc -l) -gt 0 ))
+         if (( $(oc get subscriptions -n ${pod} -o json | jq '. | .status.conditions[]?.status' 2>/dev/null | grep -v False | wc -l) -gt 0 ))
          then
             echo "**${pod}**"
             codeblock
-            oc get subscriptions -n openshift-operators openshift-gitops-operator -o json | jq '. | .status.conditions[]' 2>/dev/null >> ${adoc}
+            oc get subscriptions -n openshift-operators openshift-gitops-operator -o json | jq '. | .status.conditions[]?' 2>/dev/null >> ${adoc}
             state="FAIL"
             codeblock
          fi
@@ -941,12 +941,12 @@ security(){
       quote "Webhooks allow Operator authors to intercept, modify, and accept or reject resources before they are saved to the object store and handled by the Operator controller."
       link "https://docs.openshift.com/container-platform/${cv}/operators/understanding/olm/olm-webhooks.html"
       codeblock
-      oc get validatingwebhookconfigurations -A -o json 2>/dev/null | jq '.items[].webhooks[]' | grep -v 'caBundle' >> ${adoc}
+      oc get validatingwebhookconfigurations -A -o json 2>/dev/null | jq '.items[]?.webhooks[]?' | grep -v 'caBundle' >> ${adoc}
       # oc get validatingwebhookconfigurations -A 2>/dev/null >> ${adoc}
       codeblock
       sub "Mutating WebHook Configurations"
       codeblock
-      oc get mutatingwebhookconfigurations -A -o json 2>/dev/null | jq '.items[].webhooks[]' | grep -v 'caBundle' >> ${adoc}
+      oc get mutatingwebhookconfigurations -A -o json 2>/dev/null | jq '.items[]?.webhooks[]?' | grep -v 'caBundle' >> ${adoc}
       # oc get mutatingwebhookconfigurations -A 2>/dev/null >> ${adoc}
       codeblock
       table "WebHooks" "REVIEW" ${section}
@@ -1117,9 +1117,9 @@ storage(){
       quote "FeatureGates enable specific feature sets in your cluster. A feature set is a collection of OpenShift Container Platform features that are not enabled by default."
       link "https://docs.openshift.com/container-platform/${cv}/nodes/clusters/nodes-cluster-enabling-features.html"
       codeblock
-      if [ "{}" != $(oc get featuregates -A -o json 2>/dev/null | jq -c '.items[].spec') ]
+      if [ "{}" != $(oc get featuregates -A -o json 2>/dev/null | jq -c '.items[]?.spec') ]
       then
-         oc get featuregates -A -o json 2>/dev/null | jq -c '.items[].spec' >> ${adoc}
+         oc get featuregates -A -o json 2>/dev/null | jq -c '.items[]?.spec' >> ${adoc}
       fi
       codeblock
       table "Feature Gates" "REVIEW" ${section}
@@ -1248,7 +1248,7 @@ monitoring (){
       then
          sub "Prometheus Context"
          codeblock
-         oc get prometheuses -A -o json 2>/dev/null | jq -c '.items[].spec | .securityContext,.retention,.resources' >> ${adoc}
+         oc get prometheuses -A -o json 2>/dev/null | jq -c '.items[]?.spec | .securityContext,.retention,.resources' >> ${adoc}
          codeblock
       fi
       table "Prometheus Status" "REVIEW" ${section}
@@ -1265,7 +1265,7 @@ monitoring (){
             echo "==== ${LINE}" >> ${adoc}
             codeblock
             oc get prometheusrules -n openshift-windows-machine-config-operator windows-prometheus-k8s-rules \
-               -o json 2>/dev/null | jq '.spec[][] | .name,.rules[].expr' >> ${adoc}
+               -o json 2>/dev/null | jq '.spec[]?[]? | .name,.rules[]?.expr' >> ${adoc}
             codeblock
          done < <(oc get prometheusrules -A --no-headers 2>/dev/null | awk '{print $1,$2}')
       fi
@@ -1420,7 +1420,7 @@ network(){
       for pod in $(oc get podnetworkconnectivitycheck -n ${ns} --no-headers  2>/dev/null | awk '{print $1}')
       do
          status=$(oc get podnetworkconnectivitycheck ${pod} -n ${ns} --no-headers -o json 2>/dev/null | \
-            jq '.status.conditions[].type' | tr -d '"' )
+            jq '.status.conditions[]?.type' | tr -d '"' )
          if grep -qv "Reachable" <<< ${status}
          then
             echo "|${pod}|${status}" >> ${adoc}
@@ -1499,8 +1499,8 @@ network(){
    }
 
    mtu_size(){
-      clustermtu=$(oc get clusternetworks -o json 2>/dev/null | jq '.items[].mtu ')
-      clustersubnet=$(oc get clusternetworks -o json 2>/dev/null | jq '.items[].network' | tr -d '"' | cut -c1-7)
+      clustermtu=$(oc get clusternetworks -o json 2>/dev/null | jq '.items[]?.mtu ')
+      clustersubnet=$(oc get clusternetworks -o json 2>/dev/null | jq '.items[]?.network' | tr -d '"' | cut -c1-7)
       if [ -z ${clustermtu+x} ] || [ -z ${clustersubnet+x} ]
       then
          nodemtu=$(oc debug $(oc get nodes --no-headers -o name 2>/dev/null| head -1) -- ip a 2>/dev/null | grep ${clustersubnet} -B2 | grep mtu | awk -Fmtu '{print $2}' | awk '{print $1}';)
