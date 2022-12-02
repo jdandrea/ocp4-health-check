@@ -1,9 +1,9 @@
 
 == Executive Summary 
 
-`Red Hat Consulting` has been engaged to conduct a Health Check analysis at `{customer}'s` Openshift Container Platform 4 for the `Non-Production` cluster. The Openshift Health Check tool is designed to proactively identify problems in all areas of the cluster that might impact the platform's functionality, performance, configuration, and overall utilization. 
+`Red Hat Consulting` has been engaged to conduct a Health Check analysis at `{customer}'s` OpenShift Container Platform 4 for the `Non-Production` cluster. The OpenShift Health Check tool is designed to proactively identify problems in all areas of the cluster that might impact the platform's functionality, performance, configuration, and overall utilization. 
 
-The Health Check covers all the relevant sections of the OCP cluster from the Infrastructure and Applications and focuses on presenting only information that needs to have some attention, providing supporting documentation for the findings. The Openshift Health Check is a fully automated tool that gathers pertinent information for consultants to work with you on implementing recommendations and possible action items in your environment.
+The Health Check covers all the relevant sections of the OCP cluster from the Infrastructure and Applications and focuses on presenting only information that needs to have some attention, providing supporting documentation for the findings. The OpenShift Health Check is a fully automated tool that gathers pertinent information for consultants to work with you on implementing recommendations and possible action items in your environment.
 
 > Result: PASS
 

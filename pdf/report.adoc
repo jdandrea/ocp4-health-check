@@ -16,9 +16,9 @@
 
 == Executive Summary 
 
-`Red Hat Consulting` has been engaged to conduct a Health Check analysis at `{customer}'s` Openshift Container Platform 4 for the `Non-Production` cluster. The Openshift Health Check tool is designed to proactively identify problems in all areas of the cluster that might impact the platform's functionality, performance, configuration, and overall utilization. 
+`Red Hat Consulting` has been engaged to conduct a Health Check analysis at `{customer}'s` OpenShift Container Platform 4 for the `Non-Production` cluster. The OpenShift Health Check tool is designed to proactively identify problems in all areas of the cluster that might impact the platform's functionality, performance, configuration, and overall utilization. 
 
-The Health Check covers all the relevant sections of the OCP cluster from the Infrastructure and Applications and focuses on presenting only information that needs to have some attention, providing supporting documentation for the findings. The Openshift Health Check is a fully automated tool that gathers pertinent information for consultants to work with you on implementing recommendations and possible action items in your environment.
+The Health Check covers all the relevant sections of the OCP cluster from the Infrastructure and Applications and focuses on presenting only information that needs to have some attention, providing supporting documentation for the findings. The OpenShift Health Check is a fully automated tool that gathers pertinent information for consultants to work with you on implementing recommendations and possible action items in your environment.
 
 > Result: PASS
 
@@ -2941,7 +2941,7 @@ schrodingers-cat    nodejs-ex                  0/1    0           0          16s
 ----
 
 
-== Openshift Data Foundation
+== OpenShift Data Foundation
 
 === Versions
 
@@ -2959,7 +2959,7 @@ Client Version: 4.9.1
 
 * Navigate to the Operators menu on the left and select Installed Operators. 
 * Verify that the final Status of the installed storage cluster shows as Phase: ready with a green tick mark
-* Navigate to Storage -> Overview and ensure Openshift Data Foundation show green tick marks
+* Navigate to Storage -> Overview and ensure OpenShift Data Foundation show green tick marks
 * Click on the Storage System tab and ensure that Block Storage shows a green tick mark
 
 Non-Production Cluster

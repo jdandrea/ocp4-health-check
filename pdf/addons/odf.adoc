@@ -1,4 +1,4 @@
-== Openshift Data Foundation
+== OpenShift Data Foundation
 
 === Versions
 
@@ -16,7 +16,7 @@ Client Version: 4.9.1
 
 * Navigate to the Operators menu on the left and select Installed Operators. 
 * Verify that the final Status of the installed storage cluster shows as Phase: ready with a green tick mark
-* Navigate to Storage -> Overview and ensure Openshift Data Foundation show green tick marks
+* Navigate to Storage -> Overview and ensure OpenShift Data Foundation show green tick marks
 * Click on the Storage System tab and ensure that Block Storage shows a green tick mark
 
 Non-Production Cluster
