@@ -198,13 +198,13 @@ table(){
          echo "|===" >> ${resdoc}
          echo "" >> ${resdoc}
          sed -ie '/@STATUS_PLACEHOLDER@/ r pdf/resume.adoc' ${adoc}
-         sed -i '/@STATUS_PLACEHOLDER@/d' ${adoc}
+         sed -i '' '/@STATUS_PLACEHOLDER@/d' ${adoc}
          echo "" >> ${adoc}
 
          echo "|===" >> ${tadoc}
          echo "" >> ${tadoc}
          sed -ie '/@CHECKLIST_PLACEHOLDER@/ r pdf/table.adoc' ${adoc}
-         sed -i '/@CHECKLIST_PLACEHOLDER@/d' ${adoc}
+         sed -i '' '/@CHECKLIST_PLACEHOLDER@/d' ${adoc}
          echo "" >> ${adoc}
       else
          # Generating table adocs
@@ -338,7 +338,7 @@ commons(){
       link "https://docs.openshift.com/container-platform/${ns}/virt/logging_events_monitoring/virt-events.html#virt-about-vm-events_virt-events"
       codeblock
       oc get events --field-selector type!=Normal -A --no-headers | awk '{print $1,$3,$4,$5}' | sort | uniq >> ${adoc}
-      if (( $(oc get events --field-selector type!=Normal -A --no-headers | awk '{print $1,$3,$4,$5}' | sort | uniq | wc -l) -gt 0 ))
+      if (( $(oc get events --field-selector type!=Normal -A --no-headers | awk '{print $1,$3,$4,$5}' | sort | uniq | wc -l) > 0 ))
       then
          table "Cluster Abnormal Events" "REVIEW" ${section}
       else
@@ -490,7 +490,7 @@ nodes(){
       link "https://docs.openshift.com/container-platform/${cv}/applications/quotas/quotas-setting-across-multiple-projects.html"
       codeblock
       oc get clusterresourcequotas.quota.openshift.io -A --no-headers 2>/dev/null >> ${adoc}
-      if (( $(oc get clusterresourcequotas.quota.openshift.io -A --no-headers 2>/dev/null | wc -l) -gt 0 ))
+      if (( $(oc get clusterresourcequotas.quota.openshift.io -A --no-headers 2>/dev/null | wc -l) > 0 ))
       then
          table "Cluster Resource Quotas" "REVIEW" ${section}
       else
@@ -505,7 +505,7 @@ nodes(){
       link "https://docs.openshift.com/container-platform/${cv}/applications/quotas/quotas-setting-across-multiple-projects.html"
       codeblock
       oc get clusterserviceversions.operators.coreos.com -A 2>/dev/null | grep -v Succeeded >> ${adoc}
-      if (( $(oc get clusterserviceversions.operators.coreos.com -A --no-headers 2>/dev/null | grep -v Succeeded | wc -l) -gt 0 ))
+      if (( $(oc get clusterserviceversions.operators.coreos.com -A --no-headers 2>/dev/null | grep -v Succeeded | wc -l) > 0 ))
       then
          table "Cluster Service Versions" "FAIL" ${section}
       else
@@ -534,7 +534,7 @@ machines(){
       link "https://docs.openshift.com/container-platform/${cv}/machine_management/index.html"
       codeblock
       oc get machines -A 2>/dev/null | grep -v Running >> ${adoc}
-      if (( $(oc get machines -A --no-headers 2>/dev/null | grep -v Running | wc -l) -gt 0 ))
+      if (( $(oc get machines -A --no-headers 2>/dev/null | grep -v Running | wc -l) > 0 ))
       then
          table "Machine Information" "FAIL" ${section}
       else
@@ -552,7 +552,7 @@ machines(){
       while read LINE
       do
          machineset=(${LINE})
-         if (( ${machineset[2]} -gt 0 )) && [[ ${machineset[2]} != ${machineset[5]} ]]
+         if (( ${machineset[2]} > 0 )) && [[ ${machineset[2]} != ${machineset[5]} ]]
          then
             echo  ${machineset[@]} >> ${adoc}
             state="FAIL"
@@ -617,7 +617,7 @@ machines(){
       while read LINE
       do
          machinehealthcheck=(${LINE})
-         if (( ${machinehealthcheck[3]} -gt 0 )) && [[ ${machinehealthcheck[3]} != ${machinehealthcheck[4]} ]]
+         if (( ${machinehealthcheck[3]=0} > 0 )) && [[ ${machinehealthcheck[3]} != ${machinehealthcheck[4]} ]]
          then
             echo  ${machinehealthcheck[@]} >> ${adoc}
             state="FAIL"
@@ -664,7 +664,7 @@ etcd(){
       echo "|===" >> ${adoc}
       ${connect} etcdctl member list -w table 2>/dev/null | grep -v "+-" | sed 's/..$//' | grep -vE "STATUS|started" >> ${adoc}
       echo "|===" >> ${adoc}
-      if (( $( ${connect} etcdctl member list -w table 2>/dev/null | grep -v "+-" | sed 's/..$//' | grep -vE "STATUS|started" | wc -l ) -gt 0 ))
+      if (( $( ${connect} etcdctl member list -w table 2>/dev/null | grep -v "+-" | sed 's/..$//' | grep -vE "STATUS|started" | wc -l ) > 0 ))
       then
          table "Failing members in the cluster" "FAIL" ${section}
       else
@@ -712,7 +712,7 @@ pods(){
       link "https://docs.openshift.com/container-platform/${cv}/nodes/pods/nodes-pods-viewing.html"
       codeblock
       oc get pods -A | grep -vE 'Running|Completed' | column -t >> ${adoc}
-      if (( $(oc get pods -A --no-headers | grep -vE 'Running|Completed' | wc -l ) -gt 0 ))
+      if (( $(oc get pods -A --no-headers | grep -vE 'Running|Completed' | wc -l ) > 0 ))
       then
          table "Failing pods" "FAIL" ${section}
       else
@@ -789,7 +789,7 @@ security(){
       codeblock
       oc get csr 2>/dev/null | grep -i pending >> ${adoc}
       codeblock
-      if (( $(oc get csr 2>/dev/null | grep -i pending | wc -l ) -gt 0 ))
+      if (( $(oc get csr 2>/dev/null | grep -i pending | wc -l ) > 0 ))
       then
          table "Pending CSRs" "FAIL" ${section}
       else
@@ -851,7 +851,7 @@ security(){
       codeblock
       oc get secret -n kube-system kubeadmin 2>/dev/null >> ${adoc}
       codeblock
-      if (( $(oc get secret -n kube-system kubeadmin --no-headers 2>/dev/null | wc -l ) -gt 0 ))
+      if (( $(oc get secret -n kube-system kubeadmin --no-headers 2>/dev/null | wc -l ) > 0 ))
       then
          table "Kubeadmin Secret" "FAIL" ${section}
       else
@@ -898,7 +898,7 @@ security(){
       codeblock
       oc get subscriptions -A 2>/dev/null >> ${adoc}
       codeblock
-      if (( $(oc get subscriptions -A --no-headers 2>/dev/null | grep -v stable | wc -l ) -gt 0 ))
+      if (( $(oc get subscriptions -A --no-headers 2>/dev/null | grep -v stable | wc -l ) > 0 ))
       then
          table "Cluster Subscriptions from non-stable channels" "FAIL" ${section}
       else
@@ -909,7 +909,7 @@ security(){
       state="PASS"
       for pod in $(oc get subscriptions -A --no-headers 2>/dev/null | awk '{print $1,$2}')
       do
-         if (( $(oc get subscriptions -n ${pod} -o json | jq '. | .status.catalogHealth[]?.healthy' 2>/dev/null | grep -v true | wc -l ) -gt 0 ))
+         if (( $(oc get subscriptions -n ${pod} -o json | jq '. | .status.catalogHealth[]?.healthy' 2>/dev/null | grep -v true | wc -l ) > 0 ))
          then
             echo "**${pod}**"
             codeblock
@@ -924,7 +924,7 @@ security(){
       state="PASS"
       for pod in $(oc get subscriptions -A --no-headers 2>/dev/null | awk '{print $1,$2}')
       do
-         if (( $(oc get subscriptions -n ${pod} -o json | jq '. | .status.conditions[]?.status' 2>/dev/null | grep -v False | wc -l) -gt 0 ))
+         if (( $(oc get subscriptions -n ${pod} -o json | jq '. | .status.conditions[]?.status' 2>/dev/null | grep -v False | wc -l) > 0 ))
          then
             echo "**${pod}**"
             codeblock
@@ -1020,7 +1020,7 @@ storage(){
          sub "${status} Persistent Volumes"
          codeblock
          oc get pv -A -o wide 2>/dev/null | grep -w ${status} | column -t >> ${adoc}
-         if (( $(oc get pv -A -o wide 2>/dev/null | grep -w ${status} | wc -l) -gt 0 ))
+         if (( $(oc get pv -A -o wide 2>/dev/null | grep -w ${status} | wc -l) > 0 ))
          then
             table "PV Status ${status}" "FAIL" ${section}
          else
@@ -1039,7 +1039,7 @@ storage(){
          sub "${status} Persistent Volumes Claims"
          codeblock
          oc get pvc -A -o wide 2>/dev/null | grep -w ${status} | column -t >> ${adoc}
-         if (( $(oc get pvc -A -o wide 2>/dev/null | grep -w ${status} | wc -l) -gt 0 ))
+         if (( $(oc get pvc -A -o wide 2>/dev/null | grep -w ${status} | wc -l) > 0 ))
          then
             table "PVC Status ${status}" "FAIL" ${section}
          else
@@ -1083,7 +1083,7 @@ storage(){
          then
             echo ${data[@]} | column -t >> ${adoc}
          else
-            if (( $(echo ${data[-1]} | tr -d "d") -gt ${threshold} ))
+            if (( $(echo ${data[-1]} | tr -d "d") > ${threshold} ))
             then
                echo ${data[@]} | column -t >> ${adoc}
                state="FAIL"
@@ -1244,7 +1244,7 @@ monitoring (){
       quote "The monitoring stack provides monitoring for core platform components. You also have the option to enable monitoring for user-defined projects."
       link "https://docs.openshift.com/container-platform/4.10/monitoring/monitoring-overview.html"
       oc get pods -n openshift-monitoring | grep prometheus 2>/dev/null >> ${adoc}
-      if (( $(oc get pods -n openshift-monitoring | grep prometheus 2>/dev/null | wc -l ) -gt 0 ))
+      if (( $(oc get pods -n openshift-monitoring | grep prometheus 2>/dev/null | wc -l ) > 0 ))
       then
          sub "Prometheus Context"
          codeblock
@@ -1258,7 +1258,7 @@ monitoring (){
       sub "Prometheus Rules"
       quote "Users can then create and configure user-defined alert routing by creating or editing the AlertmanagerConfig objects."
       link "https://docs.openshift.com/container-platform/${cv}/monitoring/enabling-alert-routing-for-user-defined-projects.html"
-      if (( $(oc get pods -n openshift-monitoring | grep prometheus 2>/dev/null | wc -l ) -gt 0 ))
+      if (( $(oc get pods -n openshift-monitoring | grep prometheus 2>/dev/null | wc -l ) > 0 ))
       then
          while read LINE
          do
@@ -1544,7 +1544,7 @@ operators(){
       link "https://docs.openshift.com/container-platform/${cv}/support/troubleshooting/troubleshooting-operator-issues.html"
       codeblock
       oc get clusteroperators --no-headers | awk '$5 == "True"' >> ${adoc}
-      if (( $(oc get clusteroperators --no-headers | awk '$5 == "True"' | wc -l ) -gt 0 ))
+      if (( $(oc get clusteroperators --no-headers | awk '$5 == "True"' | wc -l ) > 0 ))
       then
          table "Degraded Cluster Operators" "FAIL" ${section}
       else
@@ -1559,7 +1559,7 @@ operators(){
       link "https://docs.openshift.com/container-platform/${cv}/support/troubleshooting/troubleshooting-operator-issues.html"
       codeblock
       oc get clusteroperators --no-headers |awk '$3 == "False"' >> ${adoc}
-      if (( $(oc get clusteroperators --no-headers | awk '$3 == "False"' | wc -l ) -gt 0 ))
+      if (( $(oc get clusteroperators --no-headers | awk '$3 == "False"' | wc -l ) > 0 ))
       then
          table "Unavailable Cluster Operators" "FAIL" ${section}
       else
@@ -1693,7 +1693,7 @@ applications(){
       codeblock
       oc get deployment -A 2>/dev/null | grep -E "0/[0-9]|NAMESPACE" | column -t >> ${adoc}
       codeblock
-      if (( $(oc get deployment -A 2>/dev/null | grep -E "0/[0-9]|NAMESPACE" | wc -l) -gt 0 ))
+      if (( $(oc get deployment -A 2>/dev/null | grep -E "0/[0-9]|NAMESPACE" | wc -l) > 0 ))
       then
          table "Non-Ready Deployments" "FAIL" ${section}
       else
@@ -1706,7 +1706,7 @@ applications(){
       codeblock
       oc get deployment -A | awk '$(NF-1)=="0" || $1=="NAMESPACE"' | column -t >> ${adoc}
       codeblock
-      if (( $(oc get deployment -A | awk '$(NF-1)=="0" || $1=="NAMESPACE"' | wc -l) -gt 0 ))
+      if (( $(oc get deployment -A | awk '$(NF-1)=="0" || $1=="NAMESPACE"' | wc -l) > 0 ))
       then
          table "Unavailable Deployments" "FAIL" ${section}
       else
@@ -1719,8 +1719,7 @@ applications(){
       codeblock
       oc get projects --no-headers 2>/dev/null | awk '$NF =! "Active"' >> ${adoc}
       codeblock
-      if (( $(oc get projects --no-headers 2>/dev/null | awk '$NF =! "Active"'
-| wc -l) -gt 0 ))
+      if (( $(oc get projects --no-headers 2>/dev/null | awk '$NF =! "Active"' | wc -l) > 0 ))
       then
          table "Inactive projects" "FAIL" ${section}
       else
@@ -1733,7 +1732,7 @@ applications(){
       codeblock
       oc get builds -A 2>/dev/null | grep -vE "Complete|Running" >> ${adoc}
       codeblock
-      if (( $(oc get builds -A 2>/dev/null | grep -vE "Complete|Running" | wc -l) -gt 0 ))
+      if (( $(oc get builds -A 2>/dev/null | grep -vE "Complete|Running" | wc -l) > 0 ))
       then
          table "Failed Builds" "FAIL" ${section}
       else
