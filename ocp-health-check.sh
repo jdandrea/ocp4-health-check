@@ -617,7 +617,7 @@ machines(){
       while read LINE
       do
          machinehealthcheck=(${LINE})
-         if (( ${machinehealthcheck[3]=0} > 0 )) && [[ ${machinehealthcheck[3]} != ${machinehealthcheck[4]} ]]
+         if (( ${machinehealthcheck[3]:=0} > 0 )) && [[ ${machinehealthcheck[3]} != ${machinehealthcheck[4]} ]]
          then
             echo  ${machinehealthcheck[@]} >> ${adoc}
             state="FAIL"
